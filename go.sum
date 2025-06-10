@@ -1,0 +1,4 @@
+github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
+github.com/sqlc-dev/sqlc v1.29.0 h1:HQctoD7y/i29Bao53qXO7CZ/BV9NcvpGpsJWvz9nKWs=
+github.com/sqlc-dev/sqlc v1.29.0/go.mod h1:BavmYw11px5AdPOjAVHmb9fctP5A8GTziC38wBF9tp0=
