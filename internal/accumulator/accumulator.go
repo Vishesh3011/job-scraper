@@ -16,8 +16,7 @@ type Accumulator struct {
 }
 
 func NewAccumulator(application application.Application, keyword string) (*Accumulator, error) {
-
-	url := fmt.Sprintf("https://www.linkedin.com/voyager/api/voyagerJobsDashJobCards?decorationId=com.linkedin.voyager.dash.deco.jobs.search.JobSearchCardsCollectionLite-87&count=7&q=jobSearch&query=(origin:JOB_SEARCH_PAGE_SEARCH_BUTTON,keywords:%s,spellCorrectionEnabled:true)&servedEventEnabled=false&start=0", url3.QueryEscape(keyword))
+	url := fmt.Sprintf("https://www.linkedin.com/voyager/api/voyagerJobsDashJobCards?decorationId=com.linkedin.voyager.dash.deco.jobs.search.JobSearchCardsCollectionLite-87&count=7&q=jobSearch&query=(origin:JOB_SEARCH_PAGE_SEARCH_BUTTON,keywords:%s,locationUnion:(geoId:%s),spellCorrectionEnabled:true)&servedEventEnabled=false&start=0", url3.QueryEscape(keyword), "104769905")
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
