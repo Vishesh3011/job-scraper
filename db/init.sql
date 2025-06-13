@@ -1,12 +1,17 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS linkedin_job_scraper_geo_locations;
+DROP TABLE IF EXISTS job_scraper_users;
+DROP TABLE IF EXISTS job_scraper_linkedin_geo_locations;
 
 CREATE TABLE IF NOT EXISTS `job_scraper_users` (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `id` BINARY(16) PRIMARY KEY,
+    `name` VARCHAR(100) NOT NULL,
+    `email` VARCHAR(100) UNIQUE NOT NULL,
+    `location` VARCHAR(100) NOT NULL,
+    `keywords` TEXT NOT NULL,
+    `cookie` TEXT,
+    `csrf_token` VARCHAR(100),
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `job_scraper_linkedin_geo_locations` (

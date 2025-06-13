@@ -1,4 +1,4 @@
-package accumulator
+package service
 
 import (
 	"encoding/json"
@@ -15,14 +15,14 @@ type Accumulator struct {
 	JobResponse string
 }
 
-func NewAccumulator(application application.Application, keyword string) (*Accumulator, error) {
-	url := fmt.Sprintf("https://www.linkedin.com/voyager/api/voyagerJobsDashJobCards?decorationId=com.linkedin.voyager.dash.deco.jobs.search.JobSearchCardsCollectionLite-87&count=7&q=jobSearch&query=(origin:JOB_SEARCH_PAGE_SEARCH_BUTTON,keywords:%s,locationUnion:(geoId:%s),spellCorrectionEnabled:true)&servedEventEnabled=false&start=0", url3.QueryEscape(keyword), "104769905")
+func NewAccumulator(application application.Application, user *models.UserInput) (*Accumulator, error) {
+	url := fmt.Sprintf("https://www.linkedin.com/voyager/api/voyagerJobsDashJobCards?decorationId=com.linkedin.voyager.dash.deco.jobs.search.JobSearchCardsCollectionLite-87&count=7&q=jobSearch&query=(origin:JOB_SEARCH_PAGE_SEARCH_BUTTON,keywords:%s,locationUnion:(geoId:%s),spellCorrectionEnabled:true)&servedEventEnabled=false&start=0", url3.QueryEscape(user.Keywords[0]), "104769905")
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("csrf-token", application.GetConfig().CsrfToken)
-	req.Header.Set("cookie", application.GetConfig().Cookie)
+	req.Header.Set("csrf-token", application.Config().CsrfToken())
+	req.Header.Set("cookie", application.Config().Cookie())
 	req.Header.Set("Accept", "application/json")
 
 	client := &http.Client{}
@@ -59,8 +59,8 @@ func NewAccumulator(application application.Application, keyword string) (*Accum
 	if err != nil {
 		return nil, err
 	}
-	req2.Header.Set("csrf-token", application.GetConfig().CsrfToken)
-	req2.Header.Set("cookie", application.GetConfig().Cookie)
+	req2.Header.Set("csrf-token", application.Config().CsrfToken())
+	req2.Header.Set("cookie", application.Config().Cookie())
 	resp2, err := client.Do(req2)
 
 	if err != nil {

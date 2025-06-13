@@ -1,0 +1,24 @@
+package repository
+
+import (
+	"database/sql"
+)
+
+type JobScraperLinkedinGeoLocation struct {
+	ID       []byte
+	Location string
+	GeoID    string
+	State    string
+	Country  string
+}
+
+type JobScraperUser struct {
+	ID        []byte
+	Name      string
+	Email     string
+	Location  string
+	Keywords  string
+	Cookie    sql.NullString
+	CsrfToken sql.NullString
+	CreatedAt sql.NullTime
+}

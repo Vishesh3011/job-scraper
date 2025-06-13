@@ -5,11 +5,11 @@ import (
 	"syscall"
 )
 
-type LinkedinConfig struct {
-	CsrfToken, Cookie string
+type linkedinConfig struct {
+	csrfToken, cookie string
 }
 
-func newLinkedINConfig() (*LinkedinConfig, error) {
+func newLinkedINConfig() (*linkedinConfig, error) {
 	csrfToken, found := syscall.Getenv("LINKEDIN_CSRF_TOKEN")
 	if !found {
 		err := errors.New("LINKEDIN_CSRF_TOKEN environment variable not set")
@@ -22,8 +22,16 @@ func newLinkedINConfig() (*LinkedinConfig, error) {
 		return nil, err
 	}
 
-	return &LinkedinConfig{
-		CsrfToken: csrfToken,
-		Cookie:    cookie,
+	return &linkedinConfig{
+		csrfToken: csrfToken,
+		cookie:    cookie,
 	}, nil
+}
+
+func (c *linkedinConfig) CsrfToken() string {
+	return c.csrfToken
+}
+
+func (c *linkedinConfig) Cookie() string {
+	return c.cookie
 }
