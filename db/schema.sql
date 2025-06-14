@@ -1,5 +1,5 @@
 CREATE TABLE job_scraper_users (
-                                   id BINARY (16) PRIMARY KEY,
+                                   id BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
                                    name VARCHAR(100) NOT NULL,
                                    email VARCHAR(100) UNIQUE NOT NULL,
                                    location VARCHAR(100) NOT NULL,
