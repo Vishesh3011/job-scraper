@@ -7,3 +7,9 @@ SELECT * FROM job_scraper_users WHERE email = ?;
 
 -- name: CheckUserExistsByEmail :one
 SELECT EXISTS(SELECT 1 FROM job_scraper_users WHERE email = ?) AS `exists`;
+
+-- name: UpdateUser :exec
+UPDATE job_scraper_users
+SET name = ?, location = ?, keywords = ?, cookie = ?, csrf_token = ?
+WHERE email = ?;
+

@@ -9,13 +9,13 @@ type LinkedInJobCards struct {
 }
 
 type LinkedInJob struct {
-	Name           string `json:"name"`
 	Title          string `json:"title"`
 	ListedAt       int64  `json:"listedAt"`
 	JobPostingId   int64  `json:"jobPostingId"`
 	CompanyDetails struct {
 		WebJobPosting struct {
 			CompanyResolutionResult struct {
+				CompanyName     string `json:"name"`
 				Description     string `json:"description"`
 				StaffCount      int    `json:"staffCount"`
 				StaffCountRange struct {
@@ -52,11 +52,32 @@ type LinkedInJob struct {
 			InPageOffsiteApply          bool   `json:"inPageOffsiteApply"`
 		} `json:"com.linkedin.voyager.jobs.OffsiteApply"`
 	} `json:"applyMethod"`
-	ExpireAt                         int64    `json:"expireAt"`
-	Country                          string   `json:"country"`
-	WorkplaceTypes                   []string `json:"workplaceTypes"`
-	FormattedEmploymentStatus        string   `json:"formattedEmploymentStatus"`
+	ExpireAt                        int64  `json:"expireAt"`
+	Country                         string `json:"country"`
+	WorkplaceTypesResolutionResults struct {
+		UrnLiFsWorkplaceType3 struct {
+			LocalizedName string `json:"localizedName"`
+			RecipeType    string `json:"$recipeType"`
+			EntityUrn     string `json:"entityUrn"`
+		} `json:"urn:li:fs_workplaceType:3"`
+	} `json:"workplaceTypesResolutionResults"`
+	FormattedEmploymentStatus        string `json:"formattedEmploymentStatus"`
 	HiringTeamMembersInjectionResult struct {
 		HiringTeamMembers []interface{} `json:"hiringTeamMembers"`
 	} `json:"allJobHiringTeamMembersInjectionResult"`
+}
+
+func (liJob *LinkedInJob) ToJob() *Job {
+	return &Job{
+		Title:           liJob.Title,
+		Company:         liJob.CompanyDetails.WebJobPosting.CompanyResolutionResult.CompanyName,
+		JobLocation:     liJob.JobLocation,
+		Description:     liJob.CompanyDescription.Text,
+		Link:            liJob.JobPostingUrl,
+		ApplyLink:       liJob.ApplyMethod.ComLinkedinVoyagerJobsOffsiteApply.CompanyApplyUrl,
+		StaffCount:      liJob.CompanyDetails.WebJobPosting.CompanyResolutionResult.StaffCount,
+		HeadquarterCity: liJob.CompanyDetails.WebJobPosting.CompanyResolutionResult.Headquarter.City,
+		ApplicantsCount: liJob.ApplicantsCount,
+		ExpiryDate:      liJob.ExpireAt,
+	}
 }

@@ -8,6 +8,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 )
 
 const checkUserExistsByEmail = `-- name: CheckUserExistsByEmail :one
@@ -29,8 +30,8 @@ VALUES (?, ?, ?, ?, ?, ?)
 type CreateUserParams struct {
 	Name      string
 	Email     string
-	Location  string
-	Keywords  string
+	Location  json.RawMessage
+	Keywords  json.RawMessage
 	Cookie    sql.NullString
 	CsrfToken sql.NullString
 }
@@ -65,4 +66,31 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (JobScraperU
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const updateUser = `-- name: UpdateUser :exec
+UPDATE job_scraper_users
+SET name = ?, location = ?, keywords = ?, cookie = ?, csrf_token = ?
+WHERE email = ?
+`
+
+type UpdateUserParams struct {
+	Name      string
+	Location  json.RawMessage
+	Keywords  json.RawMessage
+	Cookie    sql.NullString
+	CsrfToken sql.NullString
+	Email     string
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
+	_, err := q.db.ExecContext(ctx, updateUser,
+		arg.Name,
+		arg.Location,
+		arg.Keywords,
+		arg.Cookie,
+		arg.CsrfToken,
+		arg.Email,
+	)
+	return err
 }

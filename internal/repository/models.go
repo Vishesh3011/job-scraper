@@ -6,6 +6,7 @@ package repository
 
 import (
 	"database/sql"
+	"encoding/json"
 )
 
 type JobScraperLinkedinGeoLocation struct {
@@ -20,8 +21,8 @@ type JobScraperUser struct {
 	ID        []byte
 	Name      string
 	Email     string
-	Location  string
-	Keywords  string
+	Location  json.RawMessage
+	Keywords  json.RawMessage
 	Cookie    sql.NullString
 	CsrfToken sql.NullString
 	CreatedAt sql.NullTime

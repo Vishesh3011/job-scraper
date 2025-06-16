@@ -13,3 +13,7 @@ func ExtractJobID(urn string) (string, error) {
 	}
 	return matches[1], nil
 }
+
+func ToPtr[T any](value T) *T {
+	return &value
+}

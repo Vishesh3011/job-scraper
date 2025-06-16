@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS `job_scraper_users` (
     `name` VARCHAR(100) NOT NULL,
     `email` VARCHAR(100) UNIQUE NOT NULL,
     `location` VARCHAR(100) NOT NULL,
-    `keywords` TEXT NOT NULL,
+    `keywords` JSON NOT NULL,
     `cookie` TEXT,
     `csrf_token` VARCHAR(100),
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
