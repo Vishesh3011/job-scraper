@@ -1,14 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/joho/godotenv"
 	"job-scraper.go/internal/cli"
 	"job-scraper.go/internal/core/application"
 	"job-scraper.go/internal/core/config"
 	"job-scraper.go/internal/service"
 	"log"
-	"os"
 )
 
 func main() {
@@ -36,12 +34,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	respJson, err := json.Marshal(resp)
-	if err != nil {
-		log.Fatalf("Error marshalling response: %v", err)
-	}
-
-	if err := os.WriteFile("output.json", respJson, 0644); err != nil {
-		log.Fatalf("Error writing response to file: %v", err)
+	if err := service.GenerateReport(resp.Jobs, userInput.Name); err != nil {
+		log.Fatal(err)
+	} else {
+		log.Println("Report generated successfully!")
 	}
 }

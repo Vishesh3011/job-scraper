@@ -8,3 +8,12 @@ const (
 const (
 	LINKEDIN_JOB_LIMIT int = 10
 )
+
+type Platform string
+
+const (
+	LINKEDIN  Platform = "LinkedIn"
+	GLASSDOOR Platform = "Glassdoor"
+	INDEED    Platform = "Indeed"
+	REMOTEOK  Platform = "RemoteOK"
+)

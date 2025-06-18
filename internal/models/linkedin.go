@@ -1,5 +1,7 @@
 package models
 
+import "job-scraper.go/internal/types"
+
 type LinkedInJobCards struct {
 	MetaData struct {
 		JobCardPrefetchedQueries []struct {
@@ -78,6 +80,7 @@ func (liJob *LinkedInJob) ToJob() *Job {
 		StaffCount:      liJob.CompanyDetails.WebJobPosting.CompanyResolutionResult.StaffCount,
 		HeadquarterCity: liJob.CompanyDetails.WebJobPosting.CompanyResolutionResult.Headquarter.City,
 		ApplicantsCount: liJob.ApplicantsCount,
+		Platform:        types.LINKEDIN,
 		ExpiryDate:      liJob.ExpireAt,
 	}
 }
