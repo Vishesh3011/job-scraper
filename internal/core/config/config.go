@@ -3,6 +3,7 @@ package config
 type Config struct {
 	*linkedinConfig
 	*dbConfig
+	*emailConfig
 }
 
 func NewConfig() (*Config, error) {
@@ -16,8 +17,14 @@ func NewConfig() (*Config, error) {
 		return nil, err
 	}
 
+	emailConfig, err := newEmailConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
 		linkedinConfig: linkedINConfig,
 		dbConfig:       dbConfig,
+		emailConfig:    emailConfig,
 	}, nil
 }

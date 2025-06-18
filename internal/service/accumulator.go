@@ -31,8 +31,6 @@ func NewAccumulator(application application.Application, user *models.UserInput)
 			if err != nil {
 				return nil, fmt.Errorf("error fetching LinkedIn job IDs: %w", err)
 			}
-			fmt.Println(keyword, geoId)
-			fmt.Println(geoIds)
 
 			for _, jobId := range geoIds {
 				job, err := client.GetLinkedInJobDetails(jobId, *csrfToken, *cookie)

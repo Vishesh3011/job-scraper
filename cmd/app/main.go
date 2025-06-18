@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/joho/godotenv"
 	"job-scraper.go/internal/cli"
+	"job-scraper.go/internal/client"
 	"job-scraper.go/internal/core/application"
 	"job-scraper.go/internal/core/config"
 	"job-scraper.go/internal/service"
@@ -34,9 +35,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := service.GenerateReport(resp.Jobs, userInput.Name); err != nil {
+	file, err := service.GenerateReport(resp.Jobs, userInput.Name)
+	if err != nil {
 		log.Fatal(err)
 	} else {
 		log.Println("Report generated successfully!")
+	}
+
+	if userInput.Email != nil && *userInput.Email != "" {
+		if err := client.SendEmail(userInput, file, resp.Count, app.Config().EmailHostName(), app.Config().EmailPort()); err != nil {
+			log.Fatalf("Error sending email: %v", err)
+		} else {
+			log.Println("Email sent successfully!")
+		}
 	}
 }

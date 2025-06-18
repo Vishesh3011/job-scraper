@@ -8,18 +8,18 @@ import (
 	"time"
 )
 
-func GenerateReport(jobs []models.Job, userName string) error {
+func GenerateReport(jobs []models.Job, userName string) (*excelize.File, error) {
 	f := excelize.NewFile()
 	linkedInSheetName := "LinkedIn Jobs"
 	if err := f.SetSheetName("Sheet1", linkedInSheetName); err != nil {
-		return err
+		return nil, err
 	}
 
 	headers := []string{"Title", "Company", "Job Location", "Company Link", "Apply Link", "Staff Count", "Applicants Count", "Expiry Date", "Work Type"}
 	for i, header := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
 		if err := f.SetCellValue(linkedInSheetName, cell, header); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -35,7 +35,7 @@ func GenerateReport(jobs []models.Job, userName string) error {
 	}
 
 	if err := f.AutoFilter(linkedInSheetName, "A1:I1", []excelize.AutoFilterOptions{}); err != nil {
-		return err
+		return nil, err
 	}
 
 	for i := 0; i < len(headers); i++ {
@@ -44,8 +44,8 @@ func GenerateReport(jobs []models.Job, userName string) error {
 	}
 
 	if err := f.SaveAs(fmt.Sprintf("%s_LinkedIn_Jobs_Report.xlsx", userName)); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return f, nil
 }
