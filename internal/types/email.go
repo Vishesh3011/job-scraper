@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const From = "Job Scraper"
+const From = "modivishesh30@gmail.com"
 const Subject = "Your Daily Job Report"
 const Body = `
 Hello {{userName}},
@@ -13,7 +13,6 @@ Hello {{userName}},
 Please find attached your daily job report. This report includes {{jobCnt}} new job postings that match your search criteria.
 
 If you have any questions or suggestions, feel free to reach out.
-
 Best regards,
 Job Tracker Team
 `
