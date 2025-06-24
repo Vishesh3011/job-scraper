@@ -29,17 +29,6 @@ func GetUserInputFromCLI(app application.Application) (*models.UserInput, error)
 		return nil, fmt.Errorf("error marshalling keywords: %w", err)
 	}
 
-	//var locationStr string
-	//fmt.Println("Enter your interested locations for job role (can add multiple locations separated by commas): ")
-	//if _, err := fmt.Scanln(locationStr); err != nil {
-	//	log.Fatal(err)
-	//}
-	//locations := strings.Split(locationStr, ",")
-	//locationsJson, err := json.Marshal(locations)
-	//if err != nil {
-	//	return nil, fmt.Errorf("error marshalling locations: %w", err)
-	//}
-
 	var geoIds []string
 	fmt.Println("Enter your interested geo ids for locations from linkedin (can add multiple locations separated by commas): ")
 	var geoIdsStr string

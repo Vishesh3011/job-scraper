@@ -4,6 +4,7 @@ type Config struct {
 	*linkedinConfig
 	*dbConfig
 	*emailConfig
+	*telegramConfig
 }
 
 func NewConfig() (*Config, error) {
@@ -22,9 +23,15 @@ func NewConfig() (*Config, error) {
 		return nil, err
 	}
 
+	telegramConfig, err := newTelegramConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
 		linkedinConfig: linkedINConfig,
 		dbConfig:       dbConfig,
 		emailConfig:    emailConfig,
+		telegramConfig: telegramConfig,
 	}, nil
 }
