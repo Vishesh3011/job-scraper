@@ -1,13 +1,20 @@
 package config
 
-type Config struct {
+type Config interface {
+	LinkedInConfig() *linkedinConfig
+	DBConfig() *dbConfig
+	EmailConfig() *emailConfig
+	TelegramConfig() *telegramConfig
+}
+
+type config struct {
 	*linkedinConfig
 	*dbConfig
 	*emailConfig
 	*telegramConfig
 }
 
-func NewConfig() (*Config, error) {
+func NewConfig() (Config, error) {
 	linkedINConfig, err := newLinkedINConfig()
 	if err != nil {
 		return nil, err
@@ -28,10 +35,26 @@ func NewConfig() (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{
+	return &config{
 		linkedinConfig: linkedINConfig,
 		dbConfig:       dbConfig,
 		emailConfig:    emailConfig,
 		telegramConfig: telegramConfig,
 	}, nil
+}
+
+func (c *config) LinkedInConfig() *linkedinConfig {
+	return c.linkedinConfig
+}
+
+func (c *config) DBConfig() *dbConfig {
+	return c.dbConfig
+}
+
+func (c *config) EmailConfig() *emailConfig {
+	return c.emailConfig
+}
+
+func (c *config) TelegramConfig() *telegramConfig {
+	return c.telegramConfig
 }

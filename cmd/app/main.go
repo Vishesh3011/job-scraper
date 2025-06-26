@@ -4,7 +4,6 @@ import (
 	"github.com/joho/godotenv"
 	"job-scraper.go/internal/cli"
 	"job-scraper.go/internal/core/application"
-	"job-scraper.go/internal/core/config"
 	"job-scraper.go/internal/service"
 	"log"
 )
@@ -14,12 +13,7 @@ func main() {
 		log.Fatalf("Error loading .env file")
 	}
 
-	appConfig, err := config.NewConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	app, err := application.NewApplication(appConfig)
+	app, err := application.NewApplication()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,7 +37,7 @@ func main() {
 	}
 
 	if userInput.Email != nil && *userInput.Email != "" {
-		if err := app.Clients().SendEmail(userInput, file, len(jobs)); err != nil {
+		if err := app.Clients().GoMailClient().SendEmail(userInput, file, len(jobs)); err != nil {
 			log.Fatalf("Error sending email: %v", err)
 		} else {
 			log.Println("Email sent successfully!")

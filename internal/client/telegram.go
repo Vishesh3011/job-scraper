@@ -2,17 +2,17 @@ package client
 
 import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 
-type TelegramClient struct {
+type telegramClient struct {
 	token string
 }
 
-func NewTelegramClient(token string) *TelegramClient {
-	return &TelegramClient{
+func newTelegramClient(token string) *telegramClient {
+	return &telegramClient{
 		token: token,
 	}
 }
 
-func (c *TelegramClient) GetTelegramBot(token string) (*tgbotapi.BotAPI, error) {
+func (c *telegramClient) GetTelegramBot(token string) (*tgbotapi.BotAPI, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err

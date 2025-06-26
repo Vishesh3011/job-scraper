@@ -25,7 +25,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bot, err := app.Clients().GetTelegramBot(appConfig.Token())
+	bot, err := app.Clients().TelegramClient().GetTelegramBot(appConfig.Token())
 	if err != nil {
 		log.Fatalf("Error creating Telegram bot: %v", err)
 	}
