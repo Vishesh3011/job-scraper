@@ -1,11 +1,12 @@
 package cli
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"job-scraper.go/internal/core/application"
 	"job-scraper.go/internal/models"
-	"job-scraper.go/internal/repository"
+	"job-scraper.go/internal/service"
+	"job-scraper.go/internal/types"
 	"log"
 	"strings"
 )
@@ -22,12 +23,7 @@ func GetUserInputFromCLI(app application.Application) (*models.UserInput, error)
 	if _, err := fmt.Scanln(&jobRoles); err != nil {
 		log.Fatal(err)
 	}
-
 	keywords := strings.Split(jobRoles, ",")
-	keywordsJson, err := json.Marshal(keywords)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling keywords: %w", err)
-	}
 
 	var geoIds []string
 	fmt.Println("Enter your interested geo ids for locations from linkedin (can add multiple locations separated by commas): ")
@@ -36,10 +32,6 @@ func GetUserInputFromCLI(app application.Application) (*models.UserInput, error)
 		log.Fatal(err)
 	}
 	geoIds = strings.Split(geoIdsStr, ",")
-	locationsJson, err := json.Marshal(geoIds)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling geo ids: %w", err)
-	}
 
 	var emailNotify string
 	fmt.Println("Do you want to receive job notifications? (y/n): ")
@@ -58,35 +50,23 @@ func GetUserInputFromCLI(app application.Application) (*models.UserInput, error)
 	}
 
 	if email != nil {
-		exists, err := app.Queries().CheckUserExistsByEmail(app.Context(), *email)
+		ui := models.NewUserInput(name, email, nil, nil, keywords, geoIds)
+		userService := service.NewService(app).User()
+		user, err := userService.GetUserByEmail(*email)
 		if err != nil {
-			return nil, fmt.Errorf("error checking if user exists: %w", err)
+			if errors.Is(err, types.ErrRecordNotFound) {
+				if _, err := userService.CreateUser(ui); err != nil {
+					return nil, fmt.Errorf("error creating user: %w", err)
+				}
+			} else {
+				return nil, err
+			}
 		}
-		if exists {
-			log.Print("User already exists! Would you like to update your job roles? (y/n): ")
-			user, err := app.Queries().GetUserByEmail(app.Context(), *email)
-			if err != nil {
-				return nil, fmt.Errorf("error retrieving user by email: %w", err)
-			}
 
-			if err := app.Queries().UpdateUser(app.Context(), repository.UpdateUserParams{
-				Name:      user.Name,
-				Location:  user.Location,
-				Keywords:  keywordsJson,
-				Cookie:    user.Cookie,
-				CsrfToken: user.CsrfToken,
-				Email:     *email,
-			}); err != nil {
+		if user != nil {
+			log.Print("User already exists! Would you like to update your job roles? (y/n): ")
+			if _, err := userService.UpdateUser(ui); err != nil {
 				return nil, fmt.Errorf("error updating user: %w", err)
-			}
-		} else {
-			if err := app.Queries().CreateUser(app.Context(), repository.CreateUserParams{
-				Name:     name,
-				Location: locationsJson,
-				Email:    *email,
-				Keywords: keywordsJson,
-			}); err != nil {
-				return nil, fmt.Errorf("error creating user: %w", err)
 			}
 		}
 	}

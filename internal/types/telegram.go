@@ -9,4 +9,6 @@ const (
 	AWAIT_EMAIL_NOTIFY                      = "AWAIT_EMAIL_NOTIFY"
 	AWAIT_EMAIL                             = "AWAIT_EMAIL"
 	AWAIT_UPDATE_PREFERENCES                = "AWAIT_UPDATE_PREFERENCES"
+
+	SEND_REPORT TELEGRAM_STATE = "SEND_REPORT"
 )

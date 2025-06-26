@@ -8,8 +8,20 @@ import (
 	"job-scraper.go/internal/types"
 )
 
-func SendEmail(user *models.UserInput, file *excelize.File, jobCount int, hostName string, port int) error {
-	dialer := gomail.NewDialer(hostName, port, "", "")
+type GoMailClient struct {
+	hostName string
+	port     int
+}
+
+func NewGoMailClient(hostname string, port int) *GoMailClient {
+	return &GoMailClient{
+		hostName: hostname,
+		port:     port,
+	}
+}
+
+func (c *GoMailClient) SendEmail(user *models.UserInput, file *excelize.File, jobCount int) error {
+	dialer := gomail.NewDialer(c.hostName, c.port, "", "")
 	dialer.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 
 	template := types.NewEmailTemplate(user.Name, jobCount)

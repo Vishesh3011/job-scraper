@@ -2,9 +2,11 @@ package service
 
 import (
 	"job-scraper.go/internal/core/application"
+	"job-scraper.go/internal/repository"
 )
 
 type Service struct {
+	user        UserService
 	accumulator AccumulatorService
 	report      ReportService
 	telegram    TelegramService
@@ -12,10 +14,15 @@ type Service struct {
 
 func NewService(app application.Application) *Service {
 	return &Service{
-		accumulator: newAccumulatorService(app),
-		report:      newReportService(app),
-		telegram:    newTelegramService(app),
+		user:        newUserService(app.Context(), repository.New(app.DBConn())),
+		accumulator: newAccumulatorService(app.Clients(), app.Config()),
+		report:      newReportService(),
+		telegram:    newTelegramService(),
 	}
+}
+
+func (service *Service) User() UserService {
+	return service.user
 }
 
 func (service *Service) Accumulator() AccumulatorService {

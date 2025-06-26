@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"database/sql"
 	"fmt"
 	"regexp"
 )
@@ -16,4 +17,11 @@ func ExtractJobID(urn string) (string, error) {
 
 func ToPtr[T any](value T) *T {
 	return &value
+}
+
+func NullStringToPtr(ns sql.NullString) *string {
+	if ns.Valid {
+		return &ns.String
+	}
+	return nil
 }

@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 	"github.com/xuri/excelize/v2"
-	"job-scraper.go/internal/core/application"
 	"job-scraper.go/internal/models"
 	"job-scraper.go/internal/types"
 	"time"
@@ -13,14 +12,10 @@ type ReportService interface {
 	GenerateReport([]models.Job, string) (*excelize.File, error)
 }
 
-type reportService struct {
-	application.Application
-}
+type reportService struct{}
 
-func newReportService(application application.Application) ReportService {
-	return &reportService{
-		application,
-	}
+func newReportService() ReportService {
+	return &reportService{}
 }
 
 func (r reportService) GenerateReport(jobs []models.Job, userName string) (*excelize.File, error) {

@@ -11,7 +11,18 @@ import (
 	url3 "net/url"
 )
 
-func GetLinkedInJobIds(geoId, interest, csrfToken, cookie string) ([]string, error) {
+type LinkedInClient struct {
+	csrfToken, cookie string
+}
+
+func NewLinkedInClient(csrfToken, cookie string) *LinkedInClient {
+	return &LinkedInClient{
+		csrfToken: csrfToken,
+		cookie:    cookie,
+	}
+}
+
+func (c *LinkedInClient) GetLinkedInJobIds(geoId, interest, csrfToken, cookie string) ([]string, error) {
 	url := fmt.Sprintf("%s?decorationId=com.linkedin.voyager.dash.deco.jobs.search.JobSearchCardsCollectionLite-87&count=%d&q=jobSearch&query=(origin:JOB_SEARCH_PAGE_SEARCH_BUTTON,keywords:%s,locationUnion:(geoId:%s),spellCorrectionEnabled:true)&servedEventEnabled=false&start=0", types.LINKEDIN_JOB_CARDS_FETCH, types.LINKEDIN_JOB_LIMIT, url3.QueryEscape(interest), geoId)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -50,7 +61,7 @@ func GetLinkedInJobIds(geoId, interest, csrfToken, cookie string) ([]string, err
 	return jobIds, nil
 }
 
-func GetLinkedInJobDetails(jobId, csrfToken, cookie string) (*models.LinkedInJob, error) {
+func (c *LinkedInClient) GetLinkedInJobDetails(jobId, csrfToken, cookie string) (*models.LinkedInJob, error) {
 	url := fmt.Sprintf("%s%s?decorationId=com.linkedin.voyager.deco.jobs.web.shared.WebFullJobPosting-65&topN=1&topNRequestedFlavors=List(TOP_APPLICANT,IN_NETWORK,COMPANY_RECRUIT,SCHOOL_RECRUIT,HIDDEN_GEM,ACTIVELY_HIRING_COMPANY)", types.LINKEDIN_JOB_FETCH, jobId)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

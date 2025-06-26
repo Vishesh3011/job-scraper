@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"job-scraper.go/internal/repository"
 	"strconv"
 	"syscall"
 )
@@ -81,13 +80,12 @@ func (db *dbConfig) Database() string {
 	return db.database
 }
 
-func (db *dbConfig) Connect() (*repository.Queries, error) {
+func (db *dbConfig) DBConn() (*sql.DB, error) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", db.Username(), db.Password(), db.Hostname(), db.Port(), db.Database())
 	conn, err := sql.Open("mysql", dsn)
 	if err != nil {
 		err = fmt.Errorf("failed to connect to database: %v", err)
 		return nil, err
 	}
-	queries := repository.New(conn)
-	return queries, nil
+	return conn, nil
 }
