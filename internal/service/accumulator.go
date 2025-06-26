@@ -8,23 +8,32 @@ import (
 	"job-scraper.go/internal/utils"
 )
 
-type Accumulator struct {
-	Jobs  []models.Job `json:"jobs"`
-	Count int          `json:"count"`
+type AccumulatorService interface {
+	FetchJobs(*models.UserInput) ([]models.Job, error)
 }
 
-func NewAccumulator(application application.Application, user *models.UserInput) (*Accumulator, error) {
+type accumulatorService struct {
+	application.Application
+}
+
+func newAccumulatorService(app application.Application) AccumulatorService {
+	return &accumulatorService{
+		Application: app,
+	}
+}
+
+func (a accumulatorService) FetchJobs(user *models.UserInput) ([]models.Job, error) {
 	var jobs []models.Job
 	for _, keyword := range user.Keywords {
 		for _, geoId := range user.Locations {
 			csrfToken := user.CsrfToken
 			if csrfToken == nil {
-				csrfToken = utils.ToPtr(application.Config().CsrfToken())
+				csrfToken = utils.ToPtr(a.Config().CsrfToken())
 			}
 
 			cookie := user.Cookie
 			if cookie == nil {
-				cookie = utils.ToPtr(application.Config().Cookie())
+				cookie = utils.ToPtr(a.Config().Cookie())
 			}
 
 			geoIds, err := client.GetLinkedInJobIds(geoId, keyword, *csrfToken, *cookie)
@@ -42,8 +51,5 @@ func NewAccumulator(application application.Application, user *models.UserInput)
 			}
 		}
 	}
-	return &Accumulator{
-		Jobs:  jobs,
-		Count: len(jobs),
-	}, nil
+	return jobs, nil
 }

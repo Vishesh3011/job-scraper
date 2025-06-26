@@ -1,31 +1,31 @@
 package service
 
 import (
-	"context"
-	"job-scraper.go/internal/repository"
+	"job-scraper.go/internal/core/application"
 )
 
-type Service interface {
-	Queries() *repository.Queries
-	Context() *context.Context
+type Service struct {
+	accumulator AccumulatorService
+	report      ReportService
+	telegram    TelegramService
 }
 
-type service struct {
-	queries *repository.Queries
-	context *context.Context
-}
-
-func NewService(queries *repository.Queries, ctx *context.Context) Service {
-	return &service{
-		queries: queries,
-		context: ctx,
+func NewService(app application.Application) *Service {
+	return &Service{
+		accumulator: newAccumulatorService(app),
+		report:      newReportService(app),
+		telegram:    newTelegramService(app),
 	}
 }
 
-func (s *service) Queries() *repository.Queries {
-	return s.queries
+func (service *Service) Accumulator() AccumulatorService {
+	return service.accumulator
 }
 
-func (s *service) Context() *context.Context {
-	return s.context
+func (service *Service) Report() ReportService {
+	return service.report
+}
+
+func (service *Service) Telegram() TelegramService {
+	return service.telegram
 }

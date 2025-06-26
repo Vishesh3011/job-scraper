@@ -19,6 +19,3 @@ func NewUserInput(name string, email, cookie, csrfToken *string, keywords, locat
 		CsrfToken: csrfToken,
 	}
 }
-
-type User struct {
-}

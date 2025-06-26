@@ -30,12 +30,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	resp, err := service.NewAccumulator(app, userInput)
+	svc := service.NewService(app)
+
+	jobs, err := svc.Accumulator().FetchJobs(userInput)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	file, err := service.GenerateReport(resp.Jobs, userInput.Name)
+	file, err := svc.Report().GenerateReport(jobs, userInput.Name)
 	if err != nil {
 		log.Fatal(err)
 	} else {
@@ -43,7 +45,7 @@ func main() {
 	}
 
 	if userInput.Email != nil && *userInput.Email != "" {
-		if err := client.SendEmail(userInput, file, resp.Count, app.Config().EmailHostName(), app.Config().EmailPort()); err != nil {
+		if err := client.SendEmail(userInput, file, len(jobs), app.Config().EmailHostName(), app.Config().EmailPort()); err != nil {
 			log.Fatalf("Error sending email: %v", err)
 		} else {
 			log.Println("Email sent successfully!")

@@ -27,7 +27,7 @@ func NewApplication(config *config.Config) (Application, error) {
 	}
 	return &application{
 		context: ctx,
-		config:  config,
+		//config:  config,
 		queries: queries,
 	}, nil
 }

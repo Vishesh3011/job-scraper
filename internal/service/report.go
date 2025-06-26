@@ -3,12 +3,27 @@ package service
 import (
 	"fmt"
 	"github.com/xuri/excelize/v2"
+	"job-scraper.go/internal/core/application"
 	"job-scraper.go/internal/models"
 	"job-scraper.go/internal/types"
 	"time"
 )
 
-func GenerateReport(jobs []models.Job, userName string) (*excelize.File, error) {
+type ReportService interface {
+	GenerateReport([]models.Job, string) (*excelize.File, error)
+}
+
+type reportService struct {
+	application.Application
+}
+
+func newReportService(application application.Application) ReportService {
+	return &reportService{
+		application,
+	}
+}
+
+func (r reportService) GenerateReport(jobs []models.Job, userName string) (*excelize.File, error) {
 	f := excelize.NewFile()
 	linkedInSheetName := "LinkedIn Jobs"
 	if err := f.SetSheetName("Sheet1", linkedInSheetName); err != nil {
