@@ -13,11 +13,12 @@ type Service struct {
 }
 
 func NewService(app application.Application) *Service {
+	queries := repository.New(app.DBConn())
 	return &Service{
-		user:        newUserService(app.Context(), repository.New(app.DBConn())),
+		user:        newUserService(app.Context(), queries),
 		accumulator: newAccumulatorService(app.Clients(), app.Config()),
 		report:      newReportService(),
-		telegram:    newTelegramService(),
+		telegram:    newTelegramService(app.Context(), queries, app.Config(), app.Clients()),
 	}
 }
 
