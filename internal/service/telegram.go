@@ -1,8 +1,10 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"job-scraper.go/internal/client"
 	"job-scraper.go/internal/core/config"
@@ -46,7 +48,7 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 
 		if !exists {
 			userSessions[chatId] = &models.UserTelegramSession{TelegramState: types.AWAIT_USER_NAME}
-			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Enter you name: ")); err != nil {
+			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Enter your name: ")); err != nil {
 				return err
 			}
 			continue
@@ -88,40 +90,62 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 			if err != nil && !errors.Is(err, types.ErrRecordNotFound) {
 				return err
 			}
-			if user == nil {
+			if user == nil && errors.Is(err, types.ErrRecordNotFound) {
 				ui = models.NewUserInput(session.Name, session.Email, session.Cookie, session.CsrfToken, session.Keywords, session.Locations)
 				if _, err := userService.CreateUser(ui); err != nil {
 					return err
 				}
+				if _, err := bot.Send(tgbotapi.NewMessage(chatId, "You are registered successfully to our service! Sending report to you and your email...")); err != nil {
+					return err
+				}
 				session.TelegramState = types.SEND_REPORT
+			} else {
+				if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Your account already exists! Updating your details....")); err != nil {
+					return err
+				}
+				user, err := userService.GetUserByEmail(*session.Email)
+				if err != nil {
+					return err
+				}
+				ui = models.NewUserInput(user.Name, user.Email, user.Cookie, user.CsrfToken, user.Keywords, user.Locations)
+				if _, err := userService.UpdateUser(ui); err != nil {
+					return err
+				}
+				if _, err := bot.Send(tgbotapi.NewMessage(chatId, "You are updated successfully to our service! Sending report to you and your email...")); err != nil {
+					return err
+				}
+				session.TelegramState = types.FINISHED
 			}
-		case types.SEND_REPORT:
-			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "You are registered successfully to our service! Sending report to you and your email...")); err != nil {
-				return err
-			}
-
+		}
+		if session.TelegramState == types.FINISHED {
 			jobs, err := newAccumulatorService(t.Client, t.Config).FetchJobs(ui)
 			if err != nil {
 				return err
 			}
 
-			f, err := newReportService().GenerateReport(jobs, ui.Name)
+			file, err := newReportService().GenerateReport(jobs, ui.Name)
 			if err != nil {
 				return err
 			}
 
-			doc := tgbotapi.NewDocumentUpload(chatId, f)
+			var buf bytes.Buffer
+			if err := file.Write(&buf); err != nil {
+				return err
+			}
+
+			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Report generated successfully! Sending to you and your email...")); err != nil {
+				return err
+			}
+
+			doc := tgbotapi.NewDocumentUpload(chatId, tgbotapi.FileBytes{
+				Name:  fmt.Sprintf("%s_report.xlsx", ui.Name),
+				Bytes: buf.Bytes(),
+			})
 			if _, err := bot.Send(doc); err != nil {
 				return err
 			}
 
-			if err := t.Client.GoMailClient().SendEmail(ui, f, len(jobs)); err != nil {
-				return err
-			}
-
-			session.TelegramState = types.FINISHED
-		case types.FINISHED:
-			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "You are done with all the steps. Please enter /start to begin again.")); err != nil {
+			if err := t.Client.GoMailClient().SendEmail(ui, file, len(jobs)); err != nil {
 				return err
 			}
 		}

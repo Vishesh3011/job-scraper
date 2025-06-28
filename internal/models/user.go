@@ -10,7 +10,7 @@ import (
 type User struct {
 	Name      string   `json:"name"`
 	Email     *string  `json:"email;omitempty"`
-	Location  []string `json:"location"`
+	Locations []string `json:"locations"`
 	Keywords  []string `json:"keywords"`
 	Cookie    *string  `json:"cookie;omitempty"`
 	CsrfToken *string  `json:"csrf_token;omitempty"`
@@ -26,7 +26,7 @@ func NewUser(jsu *repository.JobScraperUser) *User {
 	return &User{
 		Name:      jsu.Name,
 		Email:     &jsu.Email,
-		Location:  locations,
+		Locations: locations,
 		Keywords:  keywords,
 		Cookie:    utils.NullStringToPtr(jsu.Cookie),
 		CsrfToken: utils.NullStringToPtr(jsu.CsrfToken),
