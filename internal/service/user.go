@@ -14,6 +14,7 @@ type UserService interface {
 	CreateUser(*models.UserInput) (*models.User, error)
 	UpdateUser(*models.UserInput) (*models.User, error)
 	GetUserByEmail(string) (*models.User, error)
+	GetAllUsers() ([]models.User, error)
 }
 
 type userService struct {
@@ -94,4 +95,16 @@ func (u userService) GetUserByEmail(email string) (*models.User, error) {
 	}
 
 	return models.NewUser(&jsu), nil
+}
+
+func (u userService) GetAllUsers() ([]models.User, error) {
+	users, err := u.Queries.GetAllUsers(u.Context)
+	if err != nil {
+		return nil, err
+	}
+	var result []models.User
+	for _, user := range users {
+		result = append(result, *models.NewUser(&user))
+	}
+	return result, nil
 }

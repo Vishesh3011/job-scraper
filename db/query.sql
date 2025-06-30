@@ -13,3 +13,5 @@ UPDATE job_scraper_users
 SET name = ?, location = ?, keywords = ?, cookie = ?, csrf_token = ?
 WHERE email = ?;
 
+-- name: GetAllUsers :many
+SELECT * FROM job_scraper_users;

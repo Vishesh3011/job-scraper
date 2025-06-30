@@ -13,6 +13,7 @@ type Application interface {
 	Config() config.Config
 	Clients() client.Client
 	DBConn() *sql.DB
+	Cancel() context.CancelFunc
 }
 
 type application struct {
@@ -20,10 +21,11 @@ type application struct {
 	config  config.Config
 	clients client.Client
 	dbConn  *sql.DB
+	cancel  context.CancelFunc
 }
 
 func NewApplication() (Application, error) {
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 
 	appConfig, err := config.NewConfig()
 	if err != nil {
@@ -40,6 +42,7 @@ func NewApplication() (Application, error) {
 		config:  appConfig,
 		clients: client.NewClient(appConfig),
 		dbConn:  dbConn,
+		cancel:  cancel,
 	}, nil
 }
 
@@ -57,4 +60,8 @@ func (application *application) Clients() client.Client {
 
 func (application *application) DBConn() *sql.DB {
 	return application.dbConn
+}
+
+func (application *application) Cancel() context.CancelFunc {
+	return application.cancel
 }

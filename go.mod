@@ -11,6 +11,7 @@ require (
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.4 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sqlc-dev/sqlc v1.29.0 // indirect
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
 	github.com/tiendc/go-deepcopy v1.6.0 // indirect

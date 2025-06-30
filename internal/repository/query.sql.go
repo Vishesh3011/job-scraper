@@ -48,6 +48,42 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
+const getAllUsers = `-- name: GetAllUsers :many
+SELECT id, name, email, location, keywords, cookie, csrf_token, created_at FROM job_scraper_users
+`
+
+func (q *Queries) GetAllUsers(ctx context.Context) ([]JobScraperUser, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []JobScraperUser
+	for rows.Next() {
+		var i JobScraperUser
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.Location,
+			&i.Keywords,
+			&i.Cookie,
+			&i.CsrfToken,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, name, email, location, keywords, cookie, csrf_token, created_at FROM job_scraper_users WHERE email = ?
 `

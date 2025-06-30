@@ -5,6 +5,7 @@ import (
 	"github.com/joho/godotenv"
 	"job-scraper.go/internal/core/application"
 	"job-scraper.go/internal/service"
+	"job-scraper.go/internal/utils"
 	"log"
 )
 
@@ -34,4 +35,5 @@ func main() {
 	if err := svc.HandleTelegramUpdates(bot, &updates); err != nil {
 		log.Fatalf("Error handling Telegram updates: %v", err)
 	}
+	<-utils.WaitForTermination(app.Cancel())
 }
