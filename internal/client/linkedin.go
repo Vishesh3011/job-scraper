@@ -51,12 +51,14 @@ func (c *linkedInClient) GetLinkedInJobIds(geoId, interest, csrfToken, cookie st
 	}
 
 	var jobIds []string
-	for _, str := range jobCards.MetaData.JobCardPrefetchedQueries[0].PrefetchJobPostingCardUrns {
-		jobId, err := utils.ExtractJobID(str)
-		if err != nil {
-			return nil, fmt.Errorf("error extracting job ID: %w", err)
+	if len(jobCards.MetaData.JobCardPrefetchedQueries) > 0 && len(jobCards.MetaData.JobCardPrefetchedQueries[0].PrefetchJobPostingCardUrns) > 0 {
+		for _, str := range jobCards.MetaData.JobCardPrefetchedQueries[0].PrefetchJobPostingCardUrns {
+			jobId, err := utils.ExtractJobID(str)
+			if err != nil {
+				return nil, fmt.Errorf("error extracting job ID: %w", err)
+			}
+			jobIds = append(jobIds, jobId)
 		}
-		jobIds = append(jobIds, jobId)
 	}
 	return jobIds, nil
 }

@@ -16,5 +16,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	app.Logger().Info("Starting background process. Press Ctrl+C to stop.")
 	cron.NewCron(app).Start()
 }

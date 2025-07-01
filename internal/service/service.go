@@ -18,7 +18,7 @@ func NewService(app application.Application) *Service {
 		user:        newUserService(app.Context(), queries),
 		accumulator: newAccumulatorService(app.Clients(), app.Config()),
 		report:      newReportService(),
-		telegram:    newTelegramService(app.Context(), queries, app.Config(), app.Clients()),
+		telegram:    newTelegramService(app.Context(), queries, app.Config(), app.Clients(), app.Logger()),
 	}
 }
 

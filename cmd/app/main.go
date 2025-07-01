@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"github.com/joho/godotenv"
 	"job-scraper.go/internal/cli"
 	"job-scraper.go/internal/core/application"
 	"job-scraper.go/internal/service"
 	"log"
+	"os"
 )
 
 func main() {
@@ -15,32 +17,36 @@ func main() {
 
 	app, err := application.NewApplication()
 	if err != nil {
-		log.Fatal(err)
+		app.Logger().Error(fmt.Sprintf("Error creating application: %v", err))
+		os.Exit(1)
 	}
 
 	userInput, err := cli.GetUserInputFromCLI(app)
 	if err != nil {
-		log.Fatal(err)
+		app.Logger().Error(fmt.Sprintf("Error getting user input: %v", err))
+		os.Exit(1)
 	}
 
 	svc := service.NewService(app)
 	jobs, err := svc.Accumulator().FetchJobs(userInput)
 	if err != nil {
-		log.Fatal(err)
+		app.Logger().Error(fmt.Sprintf("Error fetching jobs: %v", err))
+		os.Exit(1)
 	}
 
 	file, err := svc.Report().GenerateReport(jobs, userInput.Name)
 	if err != nil {
-		log.Fatal(err)
+		app.Logger().Error(fmt.Sprintf("Error generating report: %v", err))
+		os.Exit(1)
 	} else {
-		log.Println("Report generated successfully!")
+		app.Logger().Info(fmt.Sprintf("Generated report: %s", file))
 	}
 
 	if userInput.Email != nil && *userInput.Email != "" {
 		if err := app.Clients().GoMailClient().SendEmail(userInput, file, len(jobs)); err != nil {
-			log.Fatalf("Error sending email: %v", err)
+			app.Logger().Error(fmt.Sprintf("Error sending email: %v", err))
 		} else {
-			log.Println("Email sent successfully!")
+			app.Logger().Info(fmt.Sprintf("Email sent: %s", file))
 		}
 	}
 }

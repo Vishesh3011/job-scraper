@@ -12,6 +12,7 @@ import (
 	"job-scraper.go/internal/repository"
 	"job-scraper.go/internal/types"
 	"job-scraper.go/internal/utils"
+	"log/slog"
 	"strings"
 )
 
@@ -24,14 +25,16 @@ type telegramService struct {
 	client.Client
 	config.Config
 	*repository.Queries
+	*slog.Logger
 }
 
-func newTelegramService(ctx context.Context, q *repository.Queries, config config.Config, clients client.Client) TelegramService {
+func newTelegramService(ctx context.Context, q *repository.Queries, config config.Config, clients client.Client, logger *slog.Logger) TelegramService {
 	return telegramService{
 		Context: ctx,
 		Client:  clients,
 		Config:  config,
 		Queries: q,
+		Logger:  logger,
 	}
 }
 
@@ -62,26 +65,31 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Enter your interested job roles (seperated by commas)")); err != nil {
 				return err
 			}
+			t.Info("User name received", slog.String("username", session.Name), slog.Int64("chat_id", chatId))
 		case types.AWAIT_JOB_ROLES:
 			session.Keywords = strings.Split(msgTxt, ",")
 			session.TelegramState = types.AWAIT_GEO_IDS
 			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Enter your interested job location geo-id (seperated by commas)")); err != nil {
 				return err
 			}
+			t.Info("User job roles received", slog.String("keywords", msgTxt), slog.Int64("chat_id", chatId))
 		case types.AWAIT_GEO_IDS:
 			session.Locations = strings.Split(msgTxt, ",")
 			session.TelegramState = types.AWAIT_EMAIL_NOTIFY
 			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Are you interested in daily email report for jobs (y/n) ?")); err != nil {
 				return err
 			}
+			t.Info("User geo-ids received", slog.String("geo_ids", msgTxt), slog.Int64("chat_id", chatId))
 		case types.AWAIT_EMAIL_NOTIFY:
 			if msgTxt == "y" || msgTxt == "Y" {
 				session.TelegramState = types.AWAIT_EMAIL
 				if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Please enter your email: ")); err != nil {
 					return err
 				}
+				t.Info("User email notification preference received", slog.String("preference", msgTxt), slog.Int64("chat_id", chatId))
 			} else {
 				session.TelegramState = types.SEND_REPORT
+				t.Info("User opted out of email notifications", slog.String("preference", msgTxt), slog.Int64("chat_id", chatId))
 			}
 		case types.AWAIT_EMAIL:
 			session.Email = utils.ToPtr(msgTxt)
@@ -99,6 +107,7 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 					return err
 				}
 				session.TelegramState = types.SEND_REPORT
+				t.Info("New user registered", slog.String("email", *session.Email), slog.Int64("chat_id", chatId))
 			} else {
 				if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Your account already exists! Updating your details....")); err != nil {
 					return err
@@ -115,6 +124,7 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 					return err
 				}
 				session.TelegramState = types.FINISHED
+				t.Info("Existing user updated", slog.String("email", *session.Email), slog.Int64("chat_id", chatId))
 			}
 		}
 		if session.TelegramState == types.FINISHED {
@@ -122,6 +132,7 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 			if err != nil {
 				return err
 			}
+			t.Info("Jobs fetched", slog.Int("count", len(jobs)), slog.Int64("chat_id", chatId))
 
 			file, err := newReportService().GenerateReport(jobs, ui.Name)
 			if err != nil {
@@ -136,18 +147,22 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Report generated successfully! Sending to you and your email...")); err != nil {
 				return err
 			}
+			fileName := fmt.Sprintf("%s_report.xlsx", ui.Name)
+			t.Info("Report generated", slog.String("file", fileName), slog.Int64("chat_id", chatId))
 
 			doc := tgbotapi.NewDocumentUpload(chatId, tgbotapi.FileBytes{
-				Name:  fmt.Sprintf("%s_report.xlsx", ui.Name),
+				Name:  fileName,
 				Bytes: buf.Bytes(),
 			})
 			if _, err := bot.Send(doc); err != nil {
 				return err
 			}
-
+			t.Info("Report sent to user", slog.String("file", fileName), slog.Int64("chat_id", chatId))
+			t.Info("Sending email to user", slog.String("email", *ui.Email), slog.Int64("chat_id", chatId))
 			if err := t.Client.GoMailClient().SendEmail(ui, file, len(jobs)); err != nil {
 				return err
 			}
+			t.Info("Email sent to user", slog.String("email", *ui.Email), slog.Int64("chat_id", chatId))
 		}
 	}
 	return nil

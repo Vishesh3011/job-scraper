@@ -1,12 +1,14 @@
 package cron
 
 import (
+	"fmt"
 	"github.com/robfig/cron/v3"
 	"job-scraper.go/internal/core/application"
 	"job-scraper.go/internal/models"
 	"job-scraper.go/internal/service"
 	"job-scraper.go/internal/utils"
 	"log"
+	"os"
 )
 
 type Cron struct {
@@ -24,7 +26,8 @@ func (c *Cron) Start() {
 		log.Fatal(err)
 	}
 	if err := handleSendNotification(c.Application); err != nil {
-		log.Fatalf("Error sending notifications: %v", err)
+		c.Logger().Error(fmt.Sprintf("failed to send notification: %w", err))
+		os.Exit(1)
 	}
 	<-utils.WaitForTermination(c.Cancel())
 }

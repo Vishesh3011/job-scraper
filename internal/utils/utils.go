@@ -8,23 +8,32 @@ import (
 	"os/signal"
 	"regexp"
 	"syscall"
-	"time"
 )
 
-func WaitForTermination(cancel context.CancelFunc) <-chan struct{} {
-	sig := make(chan os.Signal, 1)
-	done := make(chan struct{})
+func GetCorrelationID(ctx context.Context) string {
+	val := ctx.Value("cid")
+	if cid, ok := val.(string); ok {
+		return cid
+	}
+	return ""
+}
 
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+func ErrToString(err error) string {
+	return fmt.Sprint(err)
+}
+
+func WaitForTermination(cancel context.CancelFunc) <-chan struct{} {
+	sigChan := make(chan os.Signal, 1)
+	doneChan := make(chan struct{})
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		<-sig
-		fmt.Println("Shutting down...at ", time.Now())
+		<-sigChan
 		cancel()
-		close(done)
+		close(doneChan)
 	}()
 
-	return done
+	return doneChan
 }
 
 func ExtractJobID(urn string) (string, error) {

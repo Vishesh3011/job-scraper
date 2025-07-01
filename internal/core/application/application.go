@@ -3,9 +3,11 @@ package application
 import (
 	"context"
 	"database/sql"
+	"github.com/google/uuid"
 	"job-scraper.go/internal/client"
 	"job-scraper.go/internal/core/config"
-	"log"
+	"job-scraper.go/internal/utils"
+	"log/slog"
 )
 
 type Application interface {
@@ -14,6 +16,7 @@ type Application interface {
 	Clients() client.Client
 	DBConn() *sql.DB
 	Cancel() context.CancelFunc
+	Logger() *slog.Logger
 }
 
 type application struct {
@@ -22,14 +25,19 @@ type application struct {
 	clients client.Client
 	dbConn  *sql.DB
 	cancel  context.CancelFunc
+	logger  *slog.Logger
 }
 
 func NewApplication() (Application, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	cid := uuid.New().String()
+	ctx = context.WithValue(ctx, "cid", cid)
+	logger := slog.Default().With("correlation_id", utils.GetCorrelationID(ctx))
+
 	appConfig, err := config.NewConfig()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	dbConn, err := appConfig.DBConfig().DBConn()
@@ -43,6 +51,7 @@ func NewApplication() (Application, error) {
 		clients: client.NewClient(appConfig),
 		dbConn:  dbConn,
 		cancel:  cancel,
+		logger:  logger,
 	}, nil
 }
 
@@ -64,4 +73,8 @@ func (application *application) DBConn() *sql.DB {
 
 func (application *application) Cancel() context.CancelFunc {
 	return application.cancel
+}
+
+func (application *application) Logger() *slog.Logger {
+	return application.logger
 }
