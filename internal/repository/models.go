@@ -20,10 +20,10 @@ type JobScraperLinkedinGeoLocation struct {
 type JobScraperUser struct {
 	ID        []byte
 	Name      string
-	Email     string
+	Email     sql.NullString
 	Location  json.RawMessage
 	Keywords  json.RawMessage
-	Cookie    sql.NullString
-	CsrfToken sql.NullString
+	Cookie    string
+	CsrfToken string
 	CreatedAt sql.NullTime
 }

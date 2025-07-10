@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/robfig/cron/v3"
 	"job-scraper.go/internal/core/application"
-	"job-scraper.go/internal/models"
 	"job-scraper.go/internal/service"
 	"job-scraper.go/internal/utils"
 	"log"
@@ -43,8 +42,7 @@ func handleSendNotification(app application.Application) error {
 		if u.Email == nil {
 			return err
 		}
-		ui := models.NewUserInput(u.Name, u.Email, u.CsrfToken, u.Cookie, u.Locations, u.Keywords)
-		jobs, err := svc.Accumulator().FetchJobs(ui)
+		jobs, err := svc.Accumulator().FetchJobs(&u)
 		if err != nil {
 			return err
 		}
@@ -54,7 +52,7 @@ func handleSendNotification(app application.Application) error {
 			return err
 		}
 
-		if err := app.Clients().GoMailClient().SendEmail(ui, file, len(jobs)); err != nil {
+		if err := app.Clients().GoMailClient().SendEmail(&u, file, len(jobs)); err != nil {
 			return err
 		} else {
 			log.Printf("Email sent successfully to user %d", u.Name)

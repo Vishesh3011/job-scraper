@@ -20,7 +20,7 @@ func newGoMailClient(hostname string, port int) *goMailClient {
 	}
 }
 
-func (c *goMailClient) SendEmail(user *models.UserInput, file *excelize.File, jobCount int) error {
+func (c *goMailClient) SendEmail(user *models.User, file *excelize.File, jobCount int) error {
 	dialer := gomail.NewDialer(c.hostName, c.port, "", "")
 	dialer.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 

@@ -1,6 +1,6 @@
 -- name: CreateUser :exec
-INSERT INTO job_scraper_users (name, email, location, keywords, cookie, csrf_token)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO job_scraper_users (id, name, email, location, keywords, cookie, csrf_token)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetUserByEmail :one
 SELECT * FROM job_scraper_users WHERE email = ?;
@@ -15,3 +15,8 @@ WHERE email = ?;
 
 -- name: GetAllUsers :many
 SELECT * FROM job_scraper_users;
+
+-- name: GetUserByID :one
+SELECT id, name, email, location, keywords, cookie, csrf_token, created_at
+FROM job_scraper_users
+WHERE id = ?;

@@ -21,29 +21,33 @@ func main() {
 		os.Exit(1)
 	}
 
-	userInput, err := cli.GetUserInputFromCLI(app)
+	user, err := cli.GetUserInputFromCLI(app)
 	if err != nil {
 		app.Logger().Error(fmt.Sprintf("Error getting user input: %v", err))
 		os.Exit(1)
 	}
+	fmt.Println(user)
 
 	svc := service.NewService(app)
-	jobs, err := svc.Accumulator().FetchJobs(userInput)
+	jobs, err := svc.Accumulator().FetchJobs(user)
 	if err != nil {
 		app.Logger().Error(fmt.Sprintf("Error fetching jobs: %v", err))
 		os.Exit(1)
 	}
+	fmt.Println("hahahaha")
+	fmt.Println(jobs)
 
-	file, err := svc.Report().GenerateReport(jobs, userInput.Name)
+	file, err := svc.Report().GenerateReport(jobs, user.Name)
 	if err != nil {
 		app.Logger().Error(fmt.Sprintf("Error generating report: %v", err))
 		os.Exit(1)
 	} else {
 		app.Logger().Info(fmt.Sprintf("Generated report: %s", file))
 	}
+	fmt.Println("After report generation")
 
-	if userInput.Email != nil && *userInput.Email != "" {
-		if err := app.Clients().GoMailClient().SendEmail(userInput, file, len(jobs)); err != nil {
+	if user.Email != nil && *user.Email != "" {
+		if err := app.Clients().GoMailClient().SendEmail(user, file, len(jobs)); err != nil {
 			app.Logger().Error(fmt.Sprintf("Error sending email: %v", err))
 		} else {
 			app.Logger().Info(fmt.Sprintf("Email sent: %s", file))

@@ -1,10 +1,16 @@
 package config
 
+import (
+	"errors"
+	"syscall"
+)
+
 type Config interface {
 	LinkedInConfig() *linkedinConfig
 	DBConfig() *dbConfig
 	EmailConfig() *emailConfig
 	TelegramConfig() *telegramConfig
+	EncryptionKey() string
 }
 
 type config struct {
@@ -12,6 +18,7 @@ type config struct {
 	*dbConfig
 	*emailConfig
 	*telegramConfig
+	encryptionKey string
 }
 
 func NewConfig() (Config, error) {
@@ -35,11 +42,18 @@ func NewConfig() (Config, error) {
 		return nil, err
 	}
 
+	key, found := syscall.Getenv("ENCRYPTION_KEY")
+	if !found {
+		err := errors.New("ENCRYPTION_KEY environment variable not set")
+		return nil, err
+	}
+
 	return &config{
 		linkedinConfig: linkedINConfig,
 		dbConfig:       dbConfig,
 		emailConfig:    emailConfig,
 		telegramConfig: telegramConfig,
+		encryptionKey:  key,
 	}, nil
 }
 
@@ -57,4 +71,8 @@ func (c *config) EmailConfig() *emailConfig {
 
 func (c *config) TelegramConfig() *telegramConfig {
 	return c.telegramConfig
+}
+
+func (c *config) EncryptionKey() string {
+	return c.encryptionKey
 }

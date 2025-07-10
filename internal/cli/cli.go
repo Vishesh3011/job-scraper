@@ -7,21 +7,22 @@ import (
 	"job-scraper.go/internal/models"
 	"job-scraper.go/internal/service"
 	"job-scraper.go/internal/types"
+	"job-scraper.go/internal/utils"
 	"log"
 	"strings"
 )
 
-func GetUserInputFromCLI(app application.Application) (*models.UserInput, error) {
+func GetUserInputFromCLI(app application.Application) (*models.User, error) {
 	var name string
 	fmt.Println("Enter your name: ")
 	if _, err := fmt.Scanln(&name); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	var jobRoles string
 	fmt.Println("Enter your interested programming languages for job role (can add multiple keywords separated by commas): ")
 	if _, err := fmt.Scanln(&jobRoles); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	keywords := strings.Split(jobRoles, ",")
 
@@ -29,14 +30,24 @@ func GetUserInputFromCLI(app application.Application) (*models.UserInput, error)
 	fmt.Println("Enter your interested geo ids for locations from linkedin (can add multiple locations separated by commas): ")
 	var geoIdsStr string
 	if _, err := fmt.Scanln(&geoIdsStr); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	geoIds = strings.Split(geoIdsStr, ",")
+
+	cookie, err := utils.ReadMultilineInput("Enter your linkedin cookie (press Enter twice to end):")
+	if err != nil {
+		return nil, err
+	}
+
+	csrfToken, err := utils.ReadMultilineInput("Enter your CSRF token (press Enter twice to end):")
+	if err != nil {
+		return nil, err
+	}
 
 	var emailNotify string
 	fmt.Println("Do you want to receive job notifications? (y/n): ")
 	if _, err := fmt.Scanln(&emailNotify); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	var email *string
@@ -44,15 +55,16 @@ func GetUserInputFromCLI(app application.Application) (*models.UserInput, error)
 		fmt.Print("Enter your email address: ")
 		tempEmail := ""
 		if _, err := fmt.Scanln(&tempEmail); err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		email = &tempEmail
 	}
 
+	createdUser := &models.User{}
 	if email != nil {
-		ui := models.NewUserInput(name, email, nil, nil, keywords, geoIds)
 		userService := service.NewService(app).User()
 		user, err := userService.GetUserByEmail(*email)
+		ui := models.NewUserInput(name, cookie, csrfToken, email, keywords, geoIds)
 		if err != nil {
 			if errors.Is(err, types.ErrRecordNotFound) {
 				if _, err := userService.CreateUser(ui); err != nil {
@@ -69,7 +81,14 @@ func GetUserInputFromCLI(app application.Application) (*models.UserInput, error)
 				return nil, fmt.Errorf("error updating user: %w", err)
 			}
 		}
+		createdUser = user
+	} else {
+		user, err := service.NewService(app).User().CreateUser(models.NewUserInput(name, cookie, csrfToken, nil, keywords, geoIds))
+		if err != nil {
+			return nil, fmt.Errorf("error creating user: %w", err)
+		}
+		createdUser = user
 	}
 
-	return models.NewUserInput(name, email, nil, nil, keywords, geoIds), nil
+	return createdUser, nil
 }

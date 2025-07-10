@@ -15,7 +15,7 @@ const checkUserExistsByEmail = `-- name: CheckUserExistsByEmail :one
 SELECT EXISTS(SELECT 1 FROM job_scraper_users WHERE email = ?) AS ` + "`" + `exists` + "`" + `
 `
 
-func (q *Queries) CheckUserExistsByEmail(ctx context.Context, email string) (bool, error) {
+func (q *Queries) CheckUserExistsByEmail(ctx context.Context, email sql.NullString) (bool, error) {
 	row := q.db.QueryRowContext(ctx, checkUserExistsByEmail, email)
 	var exists bool
 	err := row.Scan(&exists)
@@ -23,21 +23,23 @@ func (q *Queries) CheckUserExistsByEmail(ctx context.Context, email string) (boo
 }
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO job_scraper_users (name, email, location, keywords, cookie, csrf_token)
-VALUES (?, ?, ?, ?, ?, ?)
+INSERT INTO job_scraper_users (id, name, email, location, keywords, cookie, csrf_token)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateUserParams struct {
+	ID        []byte
 	Name      string
-	Email     string
+	Email     sql.NullString
 	Location  json.RawMessage
 	Keywords  json.RawMessage
-	Cookie    sql.NullString
-	CsrfToken sql.NullString
+	Cookie    string
+	CsrfToken string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	_, err := q.db.ExecContext(ctx, createUser,
+		arg.ID,
 		arg.Name,
 		arg.Email,
 		arg.Location,
@@ -88,8 +90,30 @@ const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, name, email, location, keywords, cookie, csrf_token, created_at FROM job_scraper_users WHERE email = ?
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (JobScraperUser, error) {
+func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (JobScraperUser, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i JobScraperUser
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Location,
+		&i.Keywords,
+		&i.Cookie,
+		&i.CsrfToken,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, name, email, location, keywords, cookie, csrf_token, created_at
+FROM job_scraper_users
+WHERE id = ?
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id []byte) (JobScraperUser, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
 	var i JobScraperUser
 	err := row.Scan(
 		&i.ID,
@@ -114,9 +138,9 @@ type UpdateUserParams struct {
 	Name      string
 	Location  json.RawMessage
 	Keywords  json.RawMessage
-	Cookie    sql.NullString
-	CsrfToken sql.NullString
-	Email     string
+	Cookie    string
+	CsrfToken string
+	Email     sql.NullString
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {

@@ -4,13 +4,13 @@ DROP TABLE IF EXISTS job_scraper_users;
 DROP TABLE IF EXISTS job_scraper_linkedin_geo_locations;
 
 CREATE TABLE IF NOT EXISTS `job_scraper_users` (
-    `id` BINARY(16) PRIMARY KEY DEFAULT (UUID_TO_BIN(UUID())),
+    `id` BINARY(16) PRIMARY KEY,
     `name` VARCHAR(100) NOT NULL,
-    `email` VARCHAR(100) UNIQUE NOT NULL,
+    `email` VARCHAR(100) UNIQUE,
     `location` VARCHAR(100) NOT NULL,
     `keywords` JSON NOT NULL,
-    `cookie` TEXT,
-    `csrf_token` VARCHAR(100),
+    `cookie` TEXT NOT NULL,
+    `csrf_token` TEXT NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -8,6 +8,7 @@ import (
 	"job-scraper.go/internal/models"
 	"job-scraper.go/internal/repository"
 	"job-scraper.go/internal/types"
+	"job-scraper.go/internal/utils"
 )
 
 type UserService interface {
@@ -20,41 +21,38 @@ type UserService interface {
 type userService struct {
 	context.Context
 	*repository.Queries
+	key string
 }
 
-func newUserService(ctx context.Context, q *repository.Queries) UserService {
+func newUserService(ctx context.Context, q *repository.Queries, key string) UserService {
 	return userService{
 		Context: ctx,
 		Queries: q,
+		key:     key,
 	}
 }
 
 func (u userService) CreateUser(ui *models.UserInput) (*models.User, error) {
-	loc, err := json.Marshal(ui.Locations)
+	cookie, err := utils.EncryptStr(ui.Cookie, u.key)
 	if err != nil {
 		return nil, err
 	}
 
-	keywords, err := json.Marshal(ui.Keywords)
+	token, err := utils.EncryptStr(ui.CsrfToken, u.key)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := u.Queries.CreateUser(u.Context, repository.CreateUserParams{
-		Name:     ui.Name,
-		Email:    *ui.Email,
-		Location: loc,
-		Keywords: keywords,
-	}); err != nil {
+	user := models.NewUser(ui)
+	if err := u.Queries.CreateUser(u.Context, user.ToCreateUserParam(token, cookie)); err != nil {
 		return nil, err
 	}
 
-	jsu, err := u.Queries.GetUserByEmail(u.Context, *ui.Email)
-	if err != nil {
+	if _, err := u.Queries.GetUserByID(u.Context, user.Id); err != nil {
 		return nil, err
 	}
 
-	return models.NewUser(&jsu), nil
+	return user, nil
 }
 
 func (u userService) UpdateUser(ui *models.UserInput) (*models.User, error) {
@@ -70,23 +68,23 @@ func (u userService) UpdateUser(ui *models.UserInput) (*models.User, error) {
 
 	if err := u.Queries.UpdateUser(u.Context, repository.UpdateUserParams{
 		Name:     ui.Name,
-		Email:    *ui.Email,
+		Email:    utils.ToSQLNullStr(ui.Email),
 		Location: loc,
 		Keywords: keywords,
 	}); err != nil {
 		return nil, err
 	}
 
-	jsu, err := u.Queries.GetUserByEmail(u.Context, *ui.Email)
+	jsu, err := u.Queries.GetUserByEmail(u.Context, utils.ToSQLNullStr(ui.Email))
 	if err != nil {
 		return nil, err
 	}
 
-	return models.NewUser(&jsu), nil
+	return models.ToUser(&jsu), nil
 }
 
 func (u userService) GetUserByEmail(email string) (*models.User, error) {
-	jsu, err := u.Queries.GetUserByEmail(u.Context, email)
+	jsu, err := u.Queries.GetUserByEmail(u.Context, utils.ToSQLNullStr(&email))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, types.ErrRecordNotFound
@@ -94,7 +92,7 @@ func (u userService) GetUserByEmail(email string) (*models.User, error) {
 		return nil, err
 	}
 
-	return models.NewUser(&jsu), nil
+	return models.ToUser(&jsu), nil
 }
 
 func (u userService) GetAllUsers() ([]models.User, error) {
@@ -104,7 +102,7 @@ func (u userService) GetAllUsers() ([]models.User, error) {
 	}
 	var result []models.User
 	for _, user := range users {
-		result = append(result, *models.NewUser(&user))
+		result = append(result, *models.ToUser(&user))
 	}
 	return result, nil
 }

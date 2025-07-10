@@ -2,34 +2,64 @@ package models
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"job-scraper.go/internal/repository"
 	"job-scraper.go/internal/types"
 	"job-scraper.go/internal/utils"
 )
 
 type User struct {
+	Id        []byte   `json:"id"`
 	Name      string   `json:"name"`
 	Email     *string  `json:"email;omitempty"`
 	Locations []string `json:"locations"`
 	Keywords  []string `json:"keywords"`
-	Cookie    *string  `json:"cookie;omitempty"`
-	CsrfToken *string  `json:"csrf_token;omitempty"`
+	Cookie    string   `json:"cookie;omitempty"`
+	CsrfToken string   `json:"csrf_token;omitempty"`
 }
 
-func NewUser(jsu *repository.JobScraperUser) *User {
+func NewUser(ui *UserInput) *User {
+	id := uuid.New()
+	return &User{
+		Id:        id[:],
+		Name:      ui.Name,
+		Email:     ui.Email,
+		Locations: ui.Locations,
+		Keywords:  ui.Keywords,
+		Cookie:    ui.Cookie,
+		CsrfToken: ui.CsrfToken,
+	}
+}
+
+func (user *User) ToCreateUserParam(eToken, eCookie string) repository.CreateUserParams {
+	loc, _ := json.Marshal(user.Locations)
+	keywords, _ := json.Marshal(user.Keywords)
+
+	return repository.CreateUserParams{
+		ID:        user.Id,
+		Name:      user.Name,
+		Email:     utils.ToSQLNullStr(user.Email),
+		Location:  loc,
+		Keywords:  keywords,
+		Cookie:    eCookie,
+		CsrfToken: eToken,
+	}
+}
+
+func ToUser(jsu *repository.JobScraperUser) *User {
 	var keywords []string
-	_ = json.Unmarshal([]byte(jsu.Keywords), &keywords)
+	_ = json.Unmarshal(jsu.Keywords, &keywords)
 
 	var locations []string
 	_ = json.Unmarshal(jsu.Location, &locations)
 
 	return &User{
 		Name:      jsu.Name,
-		Email:     &jsu.Email,
+		Email:     utils.NullStringToPtr(jsu.Email),
 		Locations: locations,
 		Keywords:  keywords,
-		Cookie:    utils.NullStringToPtr(jsu.Cookie),
-		CsrfToken: utils.NullStringToPtr(jsu.CsrfToken),
+		Cookie:    jsu.Cookie,
+		CsrfToken: jsu.CsrfToken,
 	}
 }
 
@@ -38,11 +68,11 @@ type UserInput struct {
 	Email     *string
 	Locations []string
 	Keywords  []string
-	Cookie    *string
-	CsrfToken *string
+	Cookie    string
+	CsrfToken string
 }
 
-func NewUserInput(name string, email, cookie, csrfToken *string, keywords, locations []string) *UserInput {
+func NewUserInput(name, cookie, csrfToken string, email *string, keywords, locations []string) *UserInput {
 	return &UserInput{
 		Name:      name,
 		Email:     email,
@@ -58,8 +88,8 @@ type UserTelegramSession struct {
 	Email         *string
 	Locations     []string
 	Keywords      []string
-	Cookie        *string
-	CsrfToken     *string
+	Cookie        string
+	CsrfToken     string
 	TelegramState types.TELEGRAM_STATE
 }
 

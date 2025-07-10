@@ -15,7 +15,7 @@ type Service struct {
 func NewService(app application.Application) *Service {
 	queries := repository.New(app.DBConn())
 	return &Service{
-		user:        newUserService(app.Context(), queries),
+		user:        newUserService(app.Context(), queries, app.Config().EncryptionKey()),
 		accumulator: newAccumulatorService(app.Clients(), app.Config()),
 		report:      newReportService(),
 		telegram:    newTelegramService(app.Context(), queries, app.Config(), app.Clients(), app.Logger()),

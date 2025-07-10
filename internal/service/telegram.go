@@ -57,7 +57,9 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 			continue
 		}
 
-		ui := &models.UserInput{}
+		createdUser := &models.User{}
+		userService := newUserService(t.Context, t.Queries, t.EncryptionKey())
+
 		switch session.TelegramState {
 		case types.AWAIT_USER_NAME:
 			session.Name = msgTxt
@@ -88,21 +90,28 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 				}
 				t.Info("User email notification preference received", slog.String("preference", msgTxt), slog.Int64("chat_id", chatId))
 			} else {
+				user, err := userService.CreateUser(models.NewUserInput(session.Name, session.Cookie, session.CsrfToken, nil, session.Keywords, session.Locations))
+				if err != nil {
+					return err
+				}
+				createdUser = user
+
 				session.TelegramState = types.SEND_REPORT
 				t.Info("User opted out of email notifications", slog.String("preference", msgTxt), slog.Int64("chat_id", chatId))
 			}
 		case types.AWAIT_EMAIL:
 			session.Email = utils.ToPtr(msgTxt)
-			userService := newUserService(t.Context, t.Queries)
 			user, err := userService.GetUserByEmail(*session.Email)
 			if err != nil && !errors.Is(err, types.ErrRecordNotFound) {
 				return err
 			}
 			if user == nil && errors.Is(err, types.ErrRecordNotFound) {
-				ui = models.NewUserInput(session.Name, session.Email, session.Cookie, session.CsrfToken, session.Keywords, session.Locations)
-				if _, err := userService.CreateUser(ui); err != nil {
+				user, err := userService.CreateUser(models.NewUserInput(session.Name, session.Cookie, session.CsrfToken, session.Email, session.Keywords, session.Locations))
+				if err != nil {
 					return err
 				}
+				createdUser = user
+
 				if _, err := bot.Send(tgbotapi.NewMessage(chatId, "You are registered successfully to our service! Sending report to you and your email...")); err != nil {
 					return err
 				}
@@ -113,11 +122,11 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 					return err
 				}
 				user, err := userService.GetUserByEmail(*session.Email)
+				createdUser = user
 				if err != nil {
 					return err
 				}
-				ui = models.NewUserInput(user.Name, user.Email, user.Cookie, user.CsrfToken, user.Keywords, user.Locations)
-				if _, err := userService.UpdateUser(ui); err != nil {
+				if _, err := userService.UpdateUser(models.NewUserInput(user.Name, user.Cookie, user.CsrfToken, user.Email, user.Keywords, user.Locations)); err != nil {
 					return err
 				}
 				if _, err := bot.Send(tgbotapi.NewMessage(chatId, "You are updated successfully to our service! Sending report to you and your email...")); err != nil {
@@ -127,14 +136,15 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 				t.Info("Existing user updated", slog.String("email", *session.Email), slog.Int64("chat_id", chatId))
 			}
 		}
+
 		if session.TelegramState == types.FINISHED {
-			jobs, err := newAccumulatorService(t.Client, t.Config).FetchJobs(ui)
+			jobs, err := newAccumulatorService(t.Client, t.Config).FetchJobs(createdUser)
 			if err != nil {
 				return err
 			}
 			t.Info("Jobs fetched", slog.Int("count", len(jobs)), slog.Int64("chat_id", chatId))
 
-			file, err := newReportService().GenerateReport(jobs, ui.Name)
+			file, err := newReportService().GenerateReport(jobs, createdUser.Name)
 			if err != nil {
 				return err
 			}
@@ -147,7 +157,7 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Report generated successfully! Sending to you and your email...")); err != nil {
 				return err
 			}
-			fileName := fmt.Sprintf("%s_report.xlsx", ui.Name)
+			fileName := fmt.Sprintf("%s_report.xlsx", createdUser.Name)
 			t.Info("Report generated", slog.String("file", fileName), slog.Int64("chat_id", chatId))
 
 			doc := tgbotapi.NewDocumentUpload(chatId, tgbotapi.FileBytes{
@@ -158,11 +168,11 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 				return err
 			}
 			t.Info("Report sent to user", slog.String("file", fileName), slog.Int64("chat_id", chatId))
-			t.Info("Sending email to user", slog.String("email", *ui.Email), slog.Int64("chat_id", chatId))
-			if err := t.Client.GoMailClient().SendEmail(ui, file, len(jobs)); err != nil {
+			t.Info("Sending email to user", slog.String("email", *createdUser.Email), slog.Int64("chat_id", chatId))
+			if err := t.Client.GoMailClient().SendEmail(createdUser, file, len(jobs)); err != nil {
 				return err
 			}
-			t.Info("Email sent to user", slog.String("email", *ui.Email), slog.Int64("chat_id", chatId))
+			t.Info("Email sent to user", slog.String("email", *createdUser.Email), slog.Int64("chat_id", chatId))
 		}
 	}
 	return nil
