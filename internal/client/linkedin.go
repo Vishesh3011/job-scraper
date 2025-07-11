@@ -12,14 +12,10 @@ import (
 )
 
 type linkedInClient struct {
-	csrfToken, cookie string
 }
 
-func newLinkedInClient(csrfToken, cookie string) *linkedInClient {
-	return &linkedInClient{
-		csrfToken: csrfToken,
-		cookie:    cookie,
-	}
+func newLinkedInClient() *linkedInClient {
+	return &linkedInClient{}
 }
 
 func (c *linkedInClient) GetLinkedInJobIds(geoId, interest, csrfToken, cookie string) ([]string, error) {

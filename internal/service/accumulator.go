@@ -44,7 +44,7 @@ func (a accumulatorService) FetchJobs(user *models.User) ([]models.Job, error) {
 			}
 
 			for _, jobId := range geoIds {
-				job, err := a.LinkedInClient().GetLinkedInJobDetails(jobId, user.CsrfToken, user.Cookie)
+				job, err := a.LinkedInClient().GetLinkedInJobDetails(jobId, dToken, dCookie)
 				if err != nil {
 					return nil, fmt.Errorf("error fetching LinkedIn job details for ID %s: %w", jobId, err)
 				}

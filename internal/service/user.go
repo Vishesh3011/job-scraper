@@ -43,16 +43,17 @@ func (u userService) CreateUser(ui *models.UserInput) (*models.User, error) {
 		return nil, err
 	}
 
-	user := models.NewUser(ui)
+	user := models.NewUser(ui.Name, ui.Email, ui.Locations, ui.Keywords, cookie, token)
 	if err := u.Queries.CreateUser(u.Context, user.ToCreateUserParam(token, cookie)); err != nil {
 		return nil, err
 	}
 
-	if _, err := u.Queries.GetUserByID(u.Context, user.Id); err != nil {
+	jsu, err := u.Queries.GetUserByID(u.Context, user.Id)
+	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return models.ToUser(&jsu), nil
 }
 
 func (u userService) UpdateUser(ui *models.UserInput) (*models.User, error) {
@@ -66,11 +67,23 @@ func (u userService) UpdateUser(ui *models.UserInput) (*models.User, error) {
 		return nil, err
 	}
 
+	cookie, err := utils.EncryptStr(ui.Cookie, u.key)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := utils.EncryptStr(ui.CsrfToken, u.key)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := u.Queries.UpdateUser(u.Context, repository.UpdateUserParams{
-		Name:     ui.Name,
-		Email:    utils.ToSQLNullStr(ui.Email),
-		Location: loc,
-		Keywords: keywords,
+		Name:      ui.Name,
+		Email:     utils.ToSQLNullStr(ui.Email),
+		Location:  loc,
+		Keywords:  keywords,
+		Cookie:    cookie,
+		CsrfToken: token,
 	}); err != nil {
 		return nil, err
 	}

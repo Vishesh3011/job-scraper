@@ -6,7 +6,6 @@ import (
 )
 
 type Config interface {
-	LinkedInConfig() *linkedinConfig
 	DBConfig() *dbConfig
 	EmailConfig() *emailConfig
 	TelegramConfig() *telegramConfig
@@ -14,7 +13,6 @@ type Config interface {
 }
 
 type config struct {
-	*linkedinConfig
 	*dbConfig
 	*emailConfig
 	*telegramConfig
@@ -22,11 +20,6 @@ type config struct {
 }
 
 func NewConfig() (Config, error) {
-	linkedINConfig, err := newLinkedINConfig()
-	if err != nil {
-		return nil, err
-	}
-
 	dbConfig, err := newDBConfig()
 	if err != nil {
 		return nil, err
@@ -49,16 +42,11 @@ func NewConfig() (Config, error) {
 	}
 
 	return &config{
-		linkedinConfig: linkedINConfig,
 		dbConfig:       dbConfig,
 		emailConfig:    emailConfig,
 		telegramConfig: telegramConfig,
 		encryptionKey:  key,
 	}, nil
-}
-
-func (c *config) LinkedInConfig() *linkedinConfig {
-	return c.linkedinConfig
 }
 
 func (c *config) DBConfig() *dbConfig {

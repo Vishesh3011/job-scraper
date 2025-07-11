@@ -51,7 +51,7 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 
 		if !exists {
 			userSessions[chatId] = &models.UserTelegramSession{TelegramState: types.AWAIT_USER_NAME}
-			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Enter your name: ")); err != nil {
+			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Please enter your name")); err != nil {
 				return err
 			}
 			continue
@@ -63,42 +63,66 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 		switch session.TelegramState {
 		case types.AWAIT_USER_NAME:
 			session.Name = msgTxt
+			t.Info("User name received", slog.String("username", session.Name), slog.Int64("chat_id", chatId))
+
 			session.TelegramState = types.AWAIT_JOB_ROLES
-			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Enter your interested job roles (seperated by commas)")); err != nil {
+			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Please enter your interested job roles (seperated by commas)")); err != nil {
 				return err
 			}
-			t.Info("User name received", slog.String("username", session.Name), slog.Int64("chat_id", chatId))
+
 		case types.AWAIT_JOB_ROLES:
 			session.Keywords = strings.Split(msgTxt, ",")
+			t.Info("User job roles received", slog.String("keywords", msgTxt), slog.Int64("chat_id", chatId))
+
 			session.TelegramState = types.AWAIT_GEO_IDS
-			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Enter your interested job location geo-id (seperated by commas)")); err != nil {
+			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Please enter your interested job location geo-id (seperated by commas)")); err != nil {
 				return err
 			}
-			t.Info("User job roles received", slog.String("keywords", msgTxt), slog.Int64("chat_id", chatId))
+
 		case types.AWAIT_GEO_IDS:
 			session.Locations = strings.Split(msgTxt, ",")
+			t.Info("User geo-ids received", slog.String("geo_ids", msgTxt), slog.Int64("chat_id", chatId))
+
+			session.TelegramState = types.AWAIT_COOKIE
+			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Please enter your cookie from linkedin")); err != nil {
+				return err
+			}
+
+		case types.AWAIT_COOKIE:
+			session.Cookie = msgTxt
+			t.Info("User cookie received", slog.Int64("chat_id", chatId))
+
+			session.TelegramState = types.AWAIT_CSRF_TOKEN
+			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Please enter your csrf token from linkedin")); err != nil {
+				return err
+			}
+
+		case types.AWAIT_CSRF_TOKEN:
+			session.CsrfToken = msgTxt
+			t.Info("User csrf token received", slog.Int64("chat_id", chatId))
+
 			session.TelegramState = types.AWAIT_EMAIL_NOTIFY
 			if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Are you interested in daily email report for jobs (y/n) ?")); err != nil {
 				return err
 			}
-			t.Info("User geo-ids received", slog.String("geo_ids", msgTxt), slog.Int64("chat_id", chatId))
+
 		case types.AWAIT_EMAIL_NOTIFY:
+			t.Info("User email notification preference received", slog.String("preference", msgTxt), slog.Int64("chat_id", chatId))
 			if msgTxt == "y" || msgTxt == "Y" {
 				session.TelegramState = types.AWAIT_EMAIL
 				if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Please enter your email: ")); err != nil {
 					return err
 				}
-				t.Info("User email notification preference received", slog.String("preference", msgTxt), slog.Int64("chat_id", chatId))
 			} else {
+				t.Info("User opted out of email notifications", slog.String("preference", msgTxt), slog.Int64("chat_id", chatId))
 				user, err := userService.CreateUser(models.NewUserInput(session.Name, session.Cookie, session.CsrfToken, nil, session.Keywords, session.Locations))
 				if err != nil {
 					return err
 				}
 				createdUser = user
-
 				session.TelegramState = types.SEND_REPORT
-				t.Info("User opted out of email notifications", slog.String("preference", msgTxt), slog.Int64("chat_id", chatId))
 			}
+
 		case types.AWAIT_EMAIL:
 			session.Email = utils.ToPtr(msgTxt)
 			user, err := userService.GetUserByEmail(*session.Email)
@@ -129,7 +153,7 @@ func (t telegramService) HandleTelegramUpdates(bot *tgbotapi.BotAPI, updates *tg
 				if _, err := userService.UpdateUser(models.NewUserInput(user.Name, user.Cookie, user.CsrfToken, user.Email, user.Keywords, user.Locations)); err != nil {
 					return err
 				}
-				if _, err := bot.Send(tgbotapi.NewMessage(chatId, "You are updated successfully to our service! Sending report to you and your email...")); err != nil {
+				if _, err := bot.Send(tgbotapi.NewMessage(chatId, "Your preferences are updated successfully to our service!")); err != nil {
 					return err
 				}
 				session.TelegramState = types.FINISHED

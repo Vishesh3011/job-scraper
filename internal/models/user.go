@@ -18,16 +18,23 @@ type User struct {
 	CsrfToken string   `json:"csrf_token;omitempty"`
 }
 
-func NewUser(ui *UserInput) *User {
+func NewUser(
+	name string,
+	email *string,
+	locations []string,
+	keywords []string,
+	cookie string,
+	csrfToken string,
+) *User {
 	id := uuid.New()
 	return &User{
 		Id:        id[:],
-		Name:      ui.Name,
-		Email:     ui.Email,
-		Locations: ui.Locations,
-		Keywords:  ui.Keywords,
-		Cookie:    ui.Cookie,
-		CsrfToken: ui.CsrfToken,
+		Name:      name,
+		Email:     email,
+		Locations: locations,
+		Keywords:  keywords,
+		Cookie:    cookie,
+		CsrfToken: csrfToken,
 	}
 }
 

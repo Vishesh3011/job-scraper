@@ -19,7 +19,7 @@ type client struct {
 func NewClient(config config.Config) Client {
 	return &client{
 		newGoMailClient(config.EmailConfig().EmailHostName(), config.EmailConfig().EmailPort()),
-		newLinkedInClient(config.LinkedInConfig().CsrfToken(), config.LinkedInConfig().Cookie()),
+		newLinkedInClient(),
 		newTelegramClient(config.TelegramConfig().Token()),
 	}
 }

@@ -6,6 +6,8 @@ const (
 	AWAIT_USER_NAME    TELEGRAM_STATE = "AWAIT_USER_NAME"
 	AWAIT_JOB_ROLES                   = "AWAIT_JOB_ROLES"
 	AWAIT_GEO_IDS                     = "AWAIT_GEO_IDS"
+	AWAIT_COOKIE                      = "AWAIT_COOKIE"
+	AWAIT_CSRF_TOKEN                  = "AWAIT_CSRF_TOKEN"
 	AWAIT_EMAIL_NOTIFY                = "AWAIT_EMAIL_NOTIFY"
 	AWAIT_EMAIL                       = "AWAIT_EMAIL"
 

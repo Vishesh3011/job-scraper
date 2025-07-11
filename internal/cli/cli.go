@@ -8,7 +8,6 @@ import (
 	"job-scraper.go/internal/service"
 	"job-scraper.go/internal/types"
 	"job-scraper.go/internal/utils"
-	"log"
 	"strings"
 )
 
@@ -52,7 +51,7 @@ func GetUserInputFromCLI(app application.Application) (*models.User, error) {
 
 	var email *string
 	if strings.ToLower(emailNotify) == "y" {
-		fmt.Print("Enter your email address: ")
+		fmt.Println("Enter your email address: ")
 		tempEmail := ""
 		if _, err := fmt.Scanln(&tempEmail); err != nil {
 			return nil, err
@@ -60,35 +59,36 @@ func GetUserInputFromCLI(app application.Application) (*models.User, error) {
 		email = &tempEmail
 	}
 
-	createdUser := &models.User{}
 	if email != nil {
 		userService := service.NewService(app).User()
 		user, err := userService.GetUserByEmail(*email)
 		ui := models.NewUserInput(name, cookie, csrfToken, email, keywords, geoIds)
 		if err != nil {
 			if errors.Is(err, types.ErrRecordNotFound) {
-				if _, err := userService.CreateUser(ui); err != nil {
+				u, err := userService.CreateUser(ui)
+				if err != nil {
 					return nil, fmt.Errorf("error creating user: %w", err)
 				}
+				return u, nil
 			} else {
 				return nil, err
 			}
 		}
 
 		if user != nil {
-			log.Print("User already exists! Would you like to update your job roles? (y/n): ")
-			if _, err := userService.UpdateUser(ui); err != nil {
+			fmt.Println("User already exists! Updating the existing user...")
+			u, err := userService.UpdateUser(ui)
+			if err != nil {
 				return nil, fmt.Errorf("error updating user: %w", err)
 			}
+			return u, nil
 		}
-		createdUser = user
 	} else {
 		user, err := service.NewService(app).User().CreateUser(models.NewUserInput(name, cookie, csrfToken, nil, keywords, geoIds))
 		if err != nil {
 			return nil, fmt.Errorf("error creating user: %w", err)
 		}
-		createdUser = user
+		return user, nil
 	}
-
-	return createdUser, nil
+	return nil, nil
 }
