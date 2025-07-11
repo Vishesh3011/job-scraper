@@ -1,3 +1,9 @@
+[//]: # ( ![job-scraper.png]&#40;data/job-scraper.png&#41;)
+#
+<div align="center">
+  <img src="data/job-scraper.png" alt="Image description" width="400"/>
+</div>
+
 # Welcome to Job Scraper!
 This tool is for everyone who wants to find jobs based on their interest, position, location (remote/on-site) using online job platforms like LinkedIn.
 This tool can be used as both a telegram bot (access on https://t.me/jobScraperVMBot) and a CLI tool. Based on user input, users can either select a daily report for jobs as email delivery or just get a report in the moment as per their requirement. 
