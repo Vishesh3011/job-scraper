@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"syscall"
+	"time"
 )
 
 func ReadMultilineInput(prompt string) (string, error) {
@@ -48,6 +49,7 @@ func WaitForTermination(cancel context.CancelFunc) <-chan struct{} {
 	go func() {
 		<-sigChan
 		cancel()
+		fmt.Println("Shutting down...at ", time.Now())
 		close(doneChan)
 	}()
 
