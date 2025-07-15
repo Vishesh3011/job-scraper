@@ -26,6 +26,13 @@ func (worker *worker) Start() {
 		log.Fatalf("Error creating Telegram bot: %v", err)
 	}
 
+	updates, err := bot.GetUpdatesChan(tgbotapi.UpdateConfig{
+		Timeout: worker.Config().TelegramConfig().Timeout(),
+	})
+	if err != nil {
+		log.Fatalf("Error getting updates channel: %v", err)
+	}
+
 	mailbox := actor.NewMailbox[models.BotMsg]()
 
 	processor := actor.New(&telegramSenderWorker{
@@ -35,10 +42,12 @@ func (worker *worker) Start() {
 	})
 
 	poller := actor.New(&telegramReceiverWorker{
-		bot:     bot,
-		logger:  worker.Logger(),
-		mailbox: mailbox,
-		app:     worker.Application,
+		bot:          bot,
+		logger:       worker.Logger(),
+		mailbox:      mailbox,
+		app:          worker.Application,
+		updates:      updates,
+		userSessions: make(map[int64]*models.UserTelegramSession),
 	})
 
 	cron := actor.New(&cronWorker{

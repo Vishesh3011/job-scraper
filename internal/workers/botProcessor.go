@@ -18,17 +18,21 @@ func (w *telegramSenderWorker) DoWork(ctx actor.Context) actor.WorkerStatus {
 	case <-ctx.Done():
 		return actor.WorkerEnd
 	case msg := <-w.mailbox.ReceiveC():
+		w.logger.Info("Received message from mailbox", slog.Int64("chat_id", msg.ChatId), slog.String("text", msg.Text))
+
 		if msg.Doc != nil {
 			_, err := w.bot.Send(msg.Doc)
 			if err != nil {
-				w.logger.Error("failed to send message", slog.String("error", err.Error()))
+				w.logger.Error("Failed to send document", slog.String("error", err.Error()))
 			}
 		} else {
 			_, err := w.bot.Send(tgbotapi.NewMessage(msg.ChatId, msg.Text))
 			if err != nil {
-				w.logger.Error("failed to send message", slog.String("error", err.Error()))
+				w.logger.Error("Failed to send message", slog.String("error", err.Error()))
+			} else {
+				w.logger.Info("Message sent to Telegram", slog.Int64("chat_id", msg.ChatId), slog.String("text", msg.Text))
 			}
 		}
-		return actor.WorkerContinue
 	}
+	return actor.WorkerContinue
 }
