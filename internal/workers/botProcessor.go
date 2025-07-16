@@ -18,8 +18,6 @@ func (w *telegramSenderWorker) DoWork(ctx actor.Context) actor.WorkerStatus {
 	case <-ctx.Done():
 		return actor.WorkerEnd
 	case msg := <-w.mailbox.ReceiveC():
-		w.logger.Info("Received message from mailbox", slog.Int64("chat_id", msg.ChatId), slog.String("text", msg.Text))
-
 		if msg.Doc != nil {
 			_, err := w.bot.Send(msg.Doc)
 			if err != nil {

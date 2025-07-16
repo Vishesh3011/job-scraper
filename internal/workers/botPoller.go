@@ -2,7 +2,6 @@ package workers
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -46,98 +45,50 @@ func (w *telegramReceiverWorker) handleSingleUpdate(update tgbotapi.Update) erro
 	chatId := update.Message.Chat.ID
 	msgTxt := update.Message.Text
 
-	w.logger.Info("Processing update",
-		slog.Int64("chat_id", chatId),
-		slog.String("message", msgTxt))
+	if msgTxt == "/start" {
+		w.mu.Lock()
+		w.userSessions[chatId] = &models.UserTelegramSession{TelegramState: types.AWAIT_USER_NAME}
+		w.mu.Unlock()
 
-	// Simple echo response for testing
-	responseText := fmt.Sprintf("Echo: %s", msgTxt)
-
-	w.logger.Info("Sending response to mailbox",
-		slog.Int64("chat_id", chatId),
-		slog.String("response", responseText))
-
-	ctx := context.Background()
-	err := w.mailbox.Send(ctx, models.BotMsg{
-		ChatId: chatId,
-		Text:   responseText,
-	})
-
-	if err != nil {
-		w.logger.Error("Failed to send to mailbox",
-			slog.String("error", err.Error()),
-			slog.Int64("chat_id", chatId))
-		return err
+		return w.mailbox.Send(w.app.Context(), models.BotMsg{
+			ChatId: chatId,
+			Text:   "Welcome to the JobScraper Telegram Bot! Please enter your name",
+		})
 	}
 
-	w.logger.Info("Message sent to mailbox successfully", slog.Int64("chat_id", chatId))
+	w.mu.Lock()
+	session, exists := w.userSessions[chatId]
+	if !exists {
+		w.userSessions[chatId] = &models.UserTelegramSession{TelegramState: types.AWAIT_USER_NAME}
+		session = w.userSessions[chatId]
+	}
+	w.mu.Unlock()
+
+	if !exists {
+		return w.mailbox.Send(w.app.Context(), models.BotMsg{
+			ChatId: chatId,
+			Text:   "Please enter your name",
+		})
+	}
+
+	switch session.TelegramState {
+	case types.AWAIT_USER_NAME:
+		return w.handleAwaitUserName(session, chatId, msgTxt)
+	case types.AWAIT_JOB_ROLES:
+		return w.handleAwaitJobRoles(session, chatId, msgTxt)
+	case types.AWAIT_GEO_IDS:
+		return w.handleAwaitGeoIds(session, chatId, msgTxt)
+	case types.AWAIT_COOKIE:
+		return w.handleAwaitCookie(session, chatId, msgTxt)
+	case types.AWAIT_CSRF_TOKEN:
+		return w.handleAwaitCsrfToken(session, chatId, msgTxt)
+	case types.AWAIT_EMAIL_NOTIFY:
+		return w.handleAwaitEmailNotify(session, chatId, msgTxt)
+	case types.AWAIT_EMAIL:
+		return w.handleAwaitEmail(session, chatId, msgTxt)
+	}
 	return nil
 }
-
-//func (w *telegramReceiverWorker) handleSingleUpdate(update tgbotapi.Update) error {
-//	if update.Message == nil {
-//		return nil
-//	}
-//
-//	chatId := update.Message.Chat.ID
-//	msgTxt := update.Message.Text
-//
-//	w.logger.Info("Processing update",
-//		slog.Int64("chat_id", chatId),
-//		slog.String("message", msgTxt),
-//		slog.Int("update_id", update.UpdateID))
-//
-//	// Special handling for /start command
-//	if msgTxt == "/start" {
-//		w.logger.Info("Received /start command, initializing new session", slog.Int64("chat_id", chatId))
-//
-//		w.mu.Lock()
-//		w.userSessions[chatId] = &models.UserTelegramSession{TelegramState: types.AWAIT_USER_NAME}
-//		w.mu.Unlock()
-//
-//		return w.mailbox.Send(w.app.Context(), models.BotMsg{
-//			ChatId: chatId,
-//			Text:   "Welcome! Please enter your name",
-//		})
-//	}
-//
-//	w.mu.Lock()
-//	session, exists := w.userSessions[chatId]
-//	if !exists {
-//		w.userSessions[chatId] = &models.UserTelegramSession{TelegramState: types.AWAIT_USER_NAME}
-//		session = w.userSessions[chatId]
-//	}
-//	w.mu.Unlock()
-//
-//	if !exists {
-//		return w.mailbox.Send(w.app.Context(), models.BotMsg{
-//			ChatId: chatId,
-//			Text:   "Please enter your name",
-//		})
-//	}
-//
-//	// Handle state machine
-//	switch session.TelegramState {
-//	case types.AWAIT_USER_NAME:
-//		return w.handleAwaitUserName(session, chatId, msgTxt)
-//	case types.AWAIT_JOB_ROLES:
-//		return w.handleAwaitJobRoles(session, chatId, msgTxt)
-//	case types.AWAIT_GEO_IDS:
-//		return w.handleAwaitGeoIds(session, chatId, msgTxt)
-//	case types.AWAIT_COOKIE:
-//		return w.handleAwaitCookie(session, chatId, msgTxt)
-//	case types.AWAIT_CSRF_TOKEN:
-//		return w.handleAwaitCsrfToken(session, chatId, msgTxt)
-//	case types.AWAIT_EMAIL_NOTIFY:
-//		return w.handleAwaitEmailNotify(session, chatId, msgTxt)
-//	case types.AWAIT_EMAIL:
-//		return w.handleAwaitEmail(session, chatId, msgTxt)
-//	case types.SEND_REPORT:
-//		return w.handleSendReport(session, chatId)
-//	}
-//
-//	return nil
-//}
 
 func (w *telegramReceiverWorker) handleAwaitUserName(session *models.UserTelegramSession, chatId int64, msgTxt string) error {
 	session.Name = msgTxt
@@ -206,14 +157,13 @@ func (w *telegramReceiverWorker) handleAwaitEmailNotify(session *models.UserTele
 	} else {
 		w.logger.Info("User opted out of email notifications", slog.String("preference", msgTxt), slog.Int64("chat_id", chatId))
 
-		// Create user without email
-		userService := service.NewService(w.app).User() // Adjust based on your service structure
+		userService := service.NewService(w.app).User()
 		user, err := userService.CreateUser(models.NewUserInput(session.Name, session.Cookie, session.CsrfToken, nil, session.Keywords, session.Locations))
 		if err != nil {
 			return err
 		}
 
-		session.CreatedUser = user // Store user in session for report generation
+		session.CreatedUser = user
 		session.TelegramState = types.SEND_REPORT
 		return w.handleSendReport(session, chatId)
 	}
@@ -229,25 +179,15 @@ func (w *telegramReceiverWorker) handleAwaitEmail(session *models.UserTelegramSe
 	}
 
 	if user == nil && errors.Is(err, types.ErrRecordNotFound) {
-		// Create new user
 		user, err := userService.CreateUser(models.NewUserInput(session.Name, session.Cookie, session.CsrfToken, session.Email, session.Keywords, session.Locations))
 		if err != nil {
 			return err
 		}
 		session.CreatedUser = user
-
-		if err := w.mailbox.Send(w.app.Context(), models.BotMsg{
-			ChatId: chatId,
-			Text:   "You are registered successfully to our service! Sending report to you and your email...",
-		}); err != nil {
-			return err
-		}
-
 		session.TelegramState = types.SEND_REPORT
+
 		w.logger.Info("New user registered", slog.String("email", *session.Email), slog.Int64("chat_id", chatId))
-		return w.handleSendReport(session, chatId)
 	} else {
-		// Update existing user
 		if err := w.mailbox.Send(w.app.Context(), models.BotMsg{
 			ChatId: chatId,
 			Text:   "Your account already exists! Updating your details....",
@@ -267,23 +207,26 @@ func (w *telegramReceiverWorker) handleAwaitEmail(session *models.UserTelegramSe
 			return err
 		}
 
-		session.TelegramState = types.FINISHED
+		session.TelegramState = types.SEND_REPORT
 		w.logger.Info("Existing user updated", slog.String("email", *session.Email), slog.Int64("chat_id", chatId))
 	}
-
-	return nil
+	if err := w.mailbox.Send(w.app.Context(), models.BotMsg{
+		ChatId: chatId,
+		Text:   "You are registered successfully to our service! Sending report to you and your email...",
+	}); err != nil {
+		return err
+	}
+	return w.handleSendReport(session, chatId)
 }
 
 func (w *telegramReceiverWorker) handleSendReport(session *models.UserTelegramSession, chatId int64) error {
-	// Fetch jobs
-	accumulatorService := service.NewService(w.app).Accumulator() // Adjust based on your service structure
+	accumulatorService := service.NewService(w.app).Accumulator()
 	jobs, err := accumulatorService.FetchJobs(session.CreatedUser)
 	if err != nil {
 		return err
 	}
 	w.logger.Info("Jobs fetched", slog.Int("count", len(jobs)), slog.Int64("chat_id", chatId))
 
-	// Generate report
 	reportService := service.NewService(w.app).Report() // Adjust based on your service structure
 	file, err := reportService.GenerateReport(jobs, session.CreatedUser.Name)
 	if err != nil {
@@ -295,7 +238,6 @@ func (w *telegramReceiverWorker) handleSendReport(session *models.UserTelegramSe
 		return err
 	}
 
-	// Send status message
 	if err := w.mailbox.Send(w.app.Context(), models.BotMsg{
 		ChatId: chatId,
 		Text:   "Report generated successfully! Sending to you and your email...",
@@ -306,7 +248,6 @@ func (w *telegramReceiverWorker) handleSendReport(session *models.UserTelegramSe
 	fileName := fmt.Sprintf("%s_report.xlsx", session.CreatedUser.Name)
 	w.logger.Info("Report generated", slog.String("file", fileName), slog.Int64("chat_id", chatId))
 
-	// Send document through mailbox
 	doc := tgbotapi.NewDocumentUpload(chatId, tgbotapi.FileBytes{
 		Name:  fileName,
 		Bytes: buf.Bytes(),
@@ -321,7 +262,6 @@ func (w *telegramReceiverWorker) handleSendReport(session *models.UserTelegramSe
 
 	w.logger.Info("Report sent to user", slog.String("file", fileName), slog.Int64("chat_id", chatId))
 
-	// Send email if user has email
 	if session.CreatedUser.Email != nil {
 		w.logger.Info("Sending email to user", slog.String("email", *session.CreatedUser.Email), slog.Int64("chat_id", chatId))
 		if err := w.app.Clients().GoMailClient().SendEmail(session.CreatedUser, file, len(jobs)); err != nil {

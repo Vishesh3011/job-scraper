@@ -54,7 +54,7 @@ func (worker *worker) Start() {
 		app: worker,
 	})
 
-	actors := actor.Combine(processor, poller, cron).Build()
+	actors := actor.Combine(mailbox, processor, poller, cron).Build()
 	actors.Start()
 
 	worker.Logger().Info(fmt.Sprintf("Worker started at %s...", time.Now().Format("2006-01-02T15:04:05 MST")))
