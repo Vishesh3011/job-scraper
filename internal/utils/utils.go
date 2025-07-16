@@ -85,3 +85,11 @@ func ToSQLNullStr(s *string) sql.NullString {
 		Valid:  true,
 	}
 }
+
+func CheckIfResponseIsJSON(body []byte) error {
+	bodyStr := strings.TrimSpace(string(body))
+	if !strings.HasPrefix(bodyStr, "{") && !strings.HasPrefix(bodyStr, "[") {
+		return fmt.Errorf("API returned error: %s", bodyStr)
+	}
+	return nil
+}

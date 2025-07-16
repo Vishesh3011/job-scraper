@@ -25,19 +25,19 @@ func newAccumulatorService(client client.Client, config config.Config) Accumulat
 }
 
 func (a accumulatorService) FetchJobs(user *models.User) ([]models.Job, error) {
+	dToken, err := utils.DecryptStr(user.CsrfToken, a.EncryptionKey())
+	if err != nil {
+		return nil, err
+	}
+
+	dCookie, err := utils.DecryptStr(user.Cookie, a.EncryptionKey())
+	if err != nil {
+		return nil, err
+	}
+
 	var jobs []models.Job
 	for _, keyword := range user.Keywords {
 		for _, geoId := range user.Locations {
-			dToken, err := utils.DecryptStr(user.CsrfToken, a.EncryptionKey())
-			if err != nil {
-				return nil, err
-			}
-
-			dCookie, err := utils.DecryptStr(user.Cookie, a.EncryptionKey())
-			if err != nil {
-				return nil, err
-			}
-
 			geoIds, err := a.LinkedInClient().GetLinkedInJobIds(geoId, keyword, dToken, dCookie)
 			if err != nil {
 				return nil, fmt.Errorf("error fetching LinkedIn job IDs: %w", err)

@@ -19,6 +19,5 @@ func main() {
 		app.Logger().Error(fmt.Sprintf("Error initializing application: %v", err))
 		os.Exit(1)
 	}
-
 	workers.NewWorker(app).Start()
 }

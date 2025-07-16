@@ -14,24 +14,30 @@ type cronWorker struct {
 	svc    *service.Service
 	logger *slog.Logger
 	client.Client
+	c *cron.Cron
 }
 
 func (w *cronWorker) DoWork(ctx actor.Context) actor.WorkerStatus {
 	select {
 	case <-ctx.Done():
+		if w.c != nil {
+			w.c.Stop()
+		}
 		return actor.WorkerEnd
 	default:
-		c := cron.New()
-		_, err := c.AddFunc("0 9 * * *", func() {
-			if err := w.handleSendNotification(); err != nil {
-				w.logger.Error(fmt.Sprintf("failed to handle send report: %v", err))
+		if w.c == nil {
+			w.c = cron.New()
+			_, err := w.c.AddFunc("0 9 * * *", func() {
+				if err := w.handleSendNotification(); err != nil {
+					w.logger.Error(fmt.Sprintf("failed to handle send report: %v", err))
+				}
+			})
+			if err != nil {
+				w.logger.Error(fmt.Sprintf("failed to start the cron job: %v", err))
+				return actor.WorkerEnd
 			}
-		})
-		if err != nil {
-			w.logger.Error(fmt.Sprintf("failed to start the cron job: %v", err))
-			return actor.WorkerEnd
+			w.c.Start()
 		}
-		c.Start()
 		return actor.WorkerContinue
 	}
 }

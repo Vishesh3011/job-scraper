@@ -31,6 +31,6 @@ func (w *telegramSenderWorker) DoWork(ctx actor.Context) actor.WorkerStatus {
 				w.logger.Info("Message sent to Telegram", slog.Int64("chat_id", msg.ChatId), slog.String("text", msg.Text))
 			}
 		}
+		return actor.WorkerContinue
 	}
-	return actor.WorkerContinue
 }

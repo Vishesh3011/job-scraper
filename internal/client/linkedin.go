@@ -9,6 +9,7 @@ import (
 	"job-scraper.go/internal/utils"
 	"net/http"
 	url3 "net/url"
+	"os"
 )
 
 type linkedInClient struct {
@@ -40,8 +41,12 @@ func (c *linkedInClient) GetLinkedInJobIds(geoId, interest, csrfToken, cookie st
 	if err != nil {
 		return nil, fmt.Errorf("error reading response body: %w", err)
 	}
+	if err := utils.CheckIfResponseIsJSON(body); err != nil {
+		return nil, err
+	}
 
 	var jobCards models.LinkedInJobCards
+	os.WriteFile("jobCards.json", body, os.ModePerm)
 	if err := json.Unmarshal(body, &jobCards); err != nil {
 		return nil, fmt.Errorf("error unmarshalling job cards: %w", err)
 	}
@@ -74,6 +79,7 @@ func (c *linkedInClient) GetLinkedInJobDetails(jobId, csrfToken, cookie string) 
 	if err != nil {
 		return nil, fmt.Errorf("error executing request: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	var job models.LinkedInJob

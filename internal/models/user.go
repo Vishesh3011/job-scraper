@@ -98,7 +98,7 @@ type UserTelegramSession struct {
 	Cookie        string
 	CsrfToken     string
 	TelegramState types.TELEGRAM_STATE
-	CreatedUser   *User
+	User          *User
 }
 
 func (uTS *UserTelegramSession) ToUserInput() UserInput {
