@@ -6,9 +6,9 @@ import (
 	"github.com/vladopajic/go-actor/actor"
 	"job-scraper.go/internal/core/application"
 	"job-scraper.go/internal/models"
+	"job-scraper.go/internal/service"
 	"job-scraper.go/internal/utils"
 	"log"
-	"math/rand"
 	"time"
 )
 
@@ -34,6 +34,7 @@ func (worker *worker) Start() {
 	}
 
 	mailbox := actor.NewMailbox[models.BotMsg]()
+	svc := service.NewService(worker.Application)
 
 	processor := actor.New(&telegramSenderWorker{
 		bot:     bot,
@@ -45,13 +46,17 @@ func (worker *worker) Start() {
 		bot:          bot,
 		logger:       worker.Logger(),
 		mailbox:      mailbox,
-		app:          worker.Application,
+		appCtx:       worker.Context(),
 		updates:      updates,
 		userSessions: make(map[int64]*models.UserTelegramSession),
+		svc:          svc,
+		Client:       worker.Clients(),
 	})
 
 	cron := actor.New(&cronWorker{
-		app: worker,
+		svc:    svc,
+		logger: worker.Logger(),
+		Client: worker.Clients(),
 	})
 
 	actors := actor.Combine(mailbox, processor, poller, cron).Build()
@@ -59,9 +64,4 @@ func (worker *worker) Start() {
 
 	worker.Logger().Info(fmt.Sprintf("Worker started at %s...", time.Now().Format("2006-01-02T15:04:05 MST")))
 	<-utils.WaitForTermination(worker.Cancel())
-
-	msg := tgbotapi.NewMessage(int64(rand.Uint64()), "Worker shutting down. See you later!")
-	if _, err := bot.Send(msg); err != nil {
-		worker.Logger().Error(fmt.Sprintf("Failed to send shutdown message: %v", err))
-	}
 }

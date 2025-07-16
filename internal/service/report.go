@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/xuri/excelize/v2"
 	"job-scraper.go/internal/models"
 	"job-scraper.go/internal/types"
@@ -51,10 +50,6 @@ func (r reportService) GenerateReport(jobs []models.Job, userName string) (*exce
 	for i := 0; i < len(headers); i++ {
 		colLetter, _ := excelize.ColumnNumberToName(i + 1)
 		f.SetColWidth(linkedInSheetName, colLetter, colLetter, 20)
-	}
-
-	if err := f.SaveAs(fmt.Sprintf("%s_LinkedIn_Jobs_Report.xlsx", userName)); err != nil {
-		return nil, err
 	}
 
 	return f, nil

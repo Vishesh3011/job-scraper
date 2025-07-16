@@ -1,21 +1,24 @@
 package main
 
 import (
+	"fmt"
 	"github.com/joho/godotenv"
 	"job-scraper.go/internal/core/application"
-	"job-scraper.go/internal/cron"
+	"job-scraper.go/internal/workers"
 	"log"
+	"os"
 )
 
 func main() {
 	if err := godotenv.Load(".env"); err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatalf("Error loading .env file")
 	}
 
 	app, err := application.NewApplication()
 	if err != nil {
-		log.Fatal(err)
+		app.Logger().Error(fmt.Sprintf("Error initializing application: %v", err))
+		os.Exit(1)
 	}
-	app.Logger().Info("Starting background process. Press Ctrl+C to stop.")
-	cron.NewCron(app).Start()
+
+	workers.NewWorker(app).Start()
 }
