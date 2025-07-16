@@ -37,7 +37,7 @@ func (w *telegramReceiverWorker) DoWork(ctx actor.Context) actor.WorkerStatus {
 			w.logger.Error(fmt.Sprintf("Error handling update: %v", err))
 			if err := w.mailbox.Send(ctx, models.BotMsg{
 				ChatId: update.Message.Chat.ID,
-				Text:   "Unable to process your request. Please try again later...",
+				Text:   string(types.PromptErrorProcessingRequest),
 			}); err != nil {
 				w.logger.Error(fmt.Sprintf("Error sending update: %v", err))
 			}
@@ -61,7 +61,7 @@ func (w *telegramReceiverWorker) handleSingleUpdate(update tgbotapi.Update) erro
 
 		return w.mailbox.Send(w.appCtx, models.BotMsg{
 			ChatId: chatId,
-			Text:   "Welcome to the JobScraper Telegram Bot! Please enter your name",
+			Text:   string(types.PromptWelcome),
 		})
 	}
 
@@ -76,7 +76,7 @@ func (w *telegramReceiverWorker) handleSingleUpdate(update tgbotapi.Update) erro
 	if !exists {
 		return w.mailbox.Send(w.appCtx, models.BotMsg{
 			ChatId: chatId,
-			Text:   "Please enter your name",
+			Text:   string(types.PromptEnterName),
 		})
 	}
 
@@ -108,7 +108,7 @@ func (w *telegramReceiverWorker) handleAwaitUserName(session *models.UserTelegra
 	session.TelegramState = types.AWAIT_JOB_ROLES
 	return w.mailbox.Send(w.appCtx, models.BotMsg{
 		ChatId: chatId,
-		Text:   "Please enter your interested job roles (separated by commas)",
+		Text:   string(types.PromptEnterJobRoles),
 	})
 }
 
@@ -119,7 +119,7 @@ func (w *telegramReceiverWorker) handleAwaitJobRoles(session *models.UserTelegra
 	session.TelegramState = types.AWAIT_GEO_IDS
 	return w.mailbox.Send(w.appCtx, models.BotMsg{
 		ChatId: chatId,
-		Text:   "Please enter your interested job location geo-id (separated by commas)",
+		Text:   string(types.PromptEnterJobLocations),
 	})
 }
 
@@ -130,7 +130,7 @@ func (w *telegramReceiverWorker) handleAwaitGeoIds(session *models.UserTelegramS
 	session.TelegramState = types.AWAIT_COOKIE
 	return w.mailbox.Send(w.appCtx, models.BotMsg{
 		ChatId: chatId,
-		Text:   "Please enter your cookie from linkedin",
+		Text:   string(types.PromptEnterLinkedInCookie),
 	})
 }
 
@@ -141,7 +141,7 @@ func (w *telegramReceiverWorker) handleAwaitCookie(session *models.UserTelegramS
 	session.TelegramState = types.AWAIT_CSRF_TOKEN
 	return w.mailbox.Send(w.appCtx, models.BotMsg{
 		ChatId: chatId,
-		Text:   "Please enter your csrf token from linkedin",
+		Text:   string(types.PromptEnterLinkedInCSRFToken),
 	})
 }
 
@@ -152,7 +152,7 @@ func (w *telegramReceiverWorker) handleAwaitCsrfToken(session *models.UserTelegr
 	session.TelegramState = types.AWAIT_EMAIL_NOTIFY
 	return w.mailbox.Send(w.appCtx, models.BotMsg{
 		ChatId: chatId,
-		Text:   "Are you interested in daily email report for jobs (y/n) ?",
+		Text:   string(types.PromptAskEmailReportPreference),
 	})
 }
 
@@ -163,7 +163,7 @@ func (w *telegramReceiverWorker) handleAwaitEmailNotify(session *models.UserTele
 		session.TelegramState = types.AWAIT_EMAIL
 		return w.mailbox.Send(w.appCtx, models.BotMsg{
 			ChatId: chatId,
-			Text:   "Please enter your email: ",
+			Text:   string(types.PromptEnterEmail),
 		})
 	} else {
 		w.logger.Info("User opted out of email notifications", slog.String("preference", msgTxt), slog.Int64("chat_id", chatId))
@@ -200,7 +200,7 @@ func (w *telegramReceiverWorker) handleAwaitEmail(session *models.UserTelegramSe
 
 		if err := w.mailbox.Send(w.appCtx, models.BotMsg{
 			ChatId: chatId,
-			Text:   "You are registered successfully to our service! Sending report to you and your email...",
+			Text:   string(types.PromptRegistrationSuccess),
 		}); err != nil {
 			return err
 		}
@@ -209,7 +209,7 @@ func (w *telegramReceiverWorker) handleAwaitEmail(session *models.UserTelegramSe
 	} else {
 		if err := w.mailbox.Send(w.appCtx, models.BotMsg{
 			ChatId: chatId,
-			Text:   "Your account already exists! Would you like to update your new details (y/n)?",
+			Text:   string(types.PromptAccountExistsUpdateRequest),
 		}); err != nil {
 			return err
 		}
@@ -229,7 +229,7 @@ func (w *telegramReceiverWorker) handleAwaitUpdateDetails(session *models.UserTe
 
 		if err := w.mailbox.Send(w.appCtx, models.BotMsg{
 			ChatId: chatId,
-			Text:   "Your preferences are updated successfully to our service!",
+			Text:   string(types.PromptPreferencesUpdated),
 		}); err != nil {
 			return err
 		}
@@ -263,7 +263,7 @@ func (w *telegramReceiverWorker) handleSendReport(session *models.UserTelegramSe
 
 	if err := w.mailbox.Send(w.appCtx, models.BotMsg{
 		ChatId: chatId,
-		Text:   "Report generated successfully! Sending to you and your email...",
+		Text:   string(types.PromptReportGenerated),
 	}); err != nil {
 		return err
 	}
