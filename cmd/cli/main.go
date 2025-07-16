@@ -43,7 +43,7 @@ func main() {
 	}
 
 	if user.Email != nil && *user.Email != "" {
-		if err := app.Clients().GoMailClient().SendEmail(user, file, len(jobs)); err != nil {
+		if err := app.Clients().GoMailClient().SendEmail(user, file, len(jobs), fmt.Sprintf("%s_report.xlsx", user.Name)); err != nil {
 			app.Logger().Error(fmt.Sprintf("Error sending email: %v", err))
 		} else {
 			app.Logger().Info(fmt.Sprintf("Email sent: %s", file))

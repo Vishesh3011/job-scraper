@@ -1,9 +1,12 @@
 package client
 
 import (
+	"bytes"
 	"crypto/tls"
+	"fmt"
 	"github.com/xuri/excelize/v2"
 	"gopkg.in/gomail.v2"
+	"io"
 	"job-scraper.go/internal/models"
 	"job-scraper.go/internal/types"
 )
@@ -20,7 +23,7 @@ func newGoMailClient(hostname string, port int) *goMailClient {
 	}
 }
 
-func (c *goMailClient) SendEmail(user *models.User, file *excelize.File, jobCount int) error {
+func (c *goMailClient) SendEmail(user *models.User, file *excelize.File, jobCount int, fileName string) error {
 	dialer := gomail.NewDialer(c.hostName, c.port, "", "")
 	dialer.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 
@@ -31,8 +34,15 @@ func (c *goMailClient) SendEmail(user *models.User, file *excelize.File, jobCoun
 	m.SetHeader("To", *user.Email)
 	m.SetHeader("Subject", template.Subject)
 	m.SetBody("text/html", template.Body)
-	if file != nil {
-		m.Attach(file.Path)
+
+	var buf bytes.Buffer
+	if err := file.Write(&buf); err != nil {
+		return fmt.Errorf("failed to write excel to buffer: %w", err)
 	}
+	m.Attach(fmt.Sprintf("%s.xlsx", fileName), gomail.SetCopyFunc(func(w io.Writer) error {
+		_, err := io.Copy(w, &buf)
+		return err
+	}))
+
 	return dialer.DialAndSend(m)
 }

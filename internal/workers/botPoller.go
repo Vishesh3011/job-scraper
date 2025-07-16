@@ -214,6 +214,7 @@ func (w *telegramReceiverWorker) handleAwaitEmail(session *models.UserTelegramSe
 			return err
 		}
 		session.TelegramState = types.AWAIT_UPDATE_DETAILS
+		session.User = user
 	}
 	return nil
 }
@@ -286,7 +287,7 @@ func (w *telegramReceiverWorker) handleSendReport(session *models.UserTelegramSe
 
 	if session.User.Email != nil {
 		w.logger.Info("Sending email to user", slog.String("email", *session.User.Email), slog.Int64("chat_id", chatId))
-		if err := w.GoMailClient().SendEmail(session.User, file, len(jobs)); err != nil {
+		if err := w.GoMailClient().SendEmail(session.User, file, len(jobs), fileName); err != nil {
 			return err
 		}
 		w.logger.Info("Email sent to user", slog.String("email", *session.User.Email), slog.Int64("chat_id", chatId))

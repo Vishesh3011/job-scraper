@@ -62,7 +62,7 @@ func (w *cronWorker) handleSendNotification() error {
 			return err
 		}
 
-		if err := w.GoMailClient().SendEmail(&u, file, len(jobs)); err != nil {
+		if err := w.GoMailClient().SendEmail(&u, file, len(jobs), fmt.Sprintf("%s_report.xlsx", u.Name)); err != nil {
 			return err
 		} else {
 			log.Printf("Email sent successfully to user %d", u.Name)
