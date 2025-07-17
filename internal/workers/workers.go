@@ -1,15 +1,18 @@
 package workers
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"time"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/robfig/cron/v3"
 	"github.com/vladopajic/go-actor/actor"
 	"job-scraper.go/internal/core/application"
 	"job-scraper.go/internal/models"
 	"job-scraper.go/internal/service"
 	"job-scraper.go/internal/utils"
-	"log"
-	"time"
 )
 
 type worker struct {
@@ -21,6 +24,7 @@ func NewWorker(app application.Application) *worker {
 }
 
 func (worker *worker) Start() {
+	ctx, cancel := context.WithCancel(worker.Context())
 	bot, err := worker.Clients().TelegramClient().GetTelegramBot(worker.Config().TelegramConfig().Token())
 	if err != nil {
 		log.Fatalf("Error creating Telegram bot: %v", err)
@@ -34,6 +38,7 @@ func (worker *worker) Start() {
 	}
 
 	mailbox := actor.NewMailbox[models.BotMsg]()
+	cronMailBox := actor.NewMailbox[bool]()
 	svc := service.NewService(worker.Application)
 
 	processor := actor.New(&telegramSenderWorker{
@@ -46,22 +51,30 @@ func (worker *worker) Start() {
 		bot:          bot,
 		logger:       worker.Logger(),
 		mailbox:      mailbox,
-		appCtx:       worker.Context(),
+		appCtx:       ctx,
 		updates:      updates,
 		userSessions: make(map[int64]*models.UserTelegramSession),
 		svc:          svc,
 		Client:       worker.Clients(),
 	})
 
+	cronTab := cron.New()
+	cronTab.AddFunc("0 9 * * *", func() {
+		cronMailBox.Send(ctx, true)
+	})
+	cronTab.Start()
+	defer cronTab.Stop()
 	cron := actor.New(&cronWorker{
 		svc:    svc,
 		logger: worker.Logger(),
 		Client: worker.Clients(),
+		inC:    cronMailBox.ReceiveC(),
 	})
 
 	actors := actor.Combine(mailbox, processor, poller, cron).Build()
 	actors.Start()
+	defer actors.Stop()
 
 	worker.Logger().Info(fmt.Sprintf("Worker started at %s...", time.Now().Format("2006-01-02T15:04:05 MST")))
-	<-utils.WaitForTermination(worker.Cancel())
+	<-utils.WaitForTermination(cancel)
 }
