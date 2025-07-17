@@ -58,20 +58,20 @@ func (worker *worker) Start() {
 		Client:       worker.Clients(),
 	})
 
-	cronTab := cron.New()
-	cronTab.AddFunc("0 9 * * *", func() {
+	c := cron.New()
+	c.AddFunc("0 9 * * *", func() {
 		cronMailBox.Send(ctx, true)
 	})
-	cronTab.Start()
-	defer cronTab.Stop()
-	cron := actor.New(&cronWorker{
+	c.Start()
+	defer c.Stop()
+	cronWorker := actor.New(&cronWorker{
 		svc:    svc,
 		logger: worker.Logger(),
 		Client: worker.Clients(),
 		inC:    cronMailBox.ReceiveC(),
 	})
 
-	actors := actor.Combine(mailbox, processor, poller, cron).Build()
+	actors := actor.Combine(mailbox, processor, poller, cronWorker).Build()
 	actors.Start()
 	defer actors.Stop()
 
