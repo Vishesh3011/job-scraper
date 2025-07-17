@@ -19,7 +19,7 @@ const (
 type BotPrompt string
 
 const (
-	PromptWelcome BotPrompt = "👋 Welcome to JobScraper Bot!\n\nThis bot helps you stay updated with the latest job listings from LinkedIn, directly in Telegram and optionally via email. Let's get you started with a quick setup!"
+	PromptWelcome BotPrompt = "👋 Welcome to JobScraper Bot!\n\nThis bot helps you stay updated with the latest job listings from LinkedIn, directly in Telegram and optionally via email. Let's get you started with a quick setup!\n\nTo begin, please enter your name."
 
 	PromptEnterName         BotPrompt = "📝 Please enter your full name:"
 	PromptEnterJobRoles     BotPrompt = "💼 What job roles are you interested in?\n(Separate multiple roles with commas)"
