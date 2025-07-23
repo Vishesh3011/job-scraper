@@ -2,24 +2,27 @@ package client
 
 import (
 	"job-scraper.go/internal/core/config"
+	"net/http"
 )
 
 type Client interface {
 	GoMailClient() *goMailClient
-	LinkedInClient() *linkedInClient
+	JobClient() *jobClient
 	TelegramClient() *telegramClient
 }
 
 type client struct {
 	*goMailClient
-	*linkedInClient
+	*jobClient
 	*telegramClient
 }
 
 func NewClient(config config.Config) Client {
+	httpClient := &http.Client{}
+
 	return &client{
 		newGoMailClient(config.EmailConfig().EmailHostName(), config.EmailConfig().EmailPort()),
-		newLinkedInClient(),
+		newJobClient(httpClient),
 		newTelegramClient(config.TelegramConfig().Token()),
 	}
 }
@@ -28,8 +31,8 @@ func (c *client) GoMailClient() *goMailClient {
 	return c.goMailClient
 }
 
-func (c *client) LinkedInClient() *linkedInClient {
-	return c.linkedInClient
+func (c *client) JobClient() *jobClient {
+	return c.jobClient
 }
 
 func (c *client) TelegramClient() *telegramClient {
