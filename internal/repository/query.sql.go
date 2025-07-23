@@ -86,6 +86,32 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]JobScraperUser, error) {
 	return items, nil
 }
 
+const getGeoLocationByLocation = `-- name: GetGeoLocationByLocation :one
+SELECT
+    id,
+    location,
+    geo_id,
+    state,
+    country
+FROM
+    job_scraper_linkedin_geo_locations
+WHERE
+    LOWER(location) = LOWER(?)
+`
+
+func (q *Queries) GetGeoLocationByLocation(ctx context.Context, lower string) (JobScraperLinkedinGeoLocation, error) {
+	row := q.db.QueryRowContext(ctx, getGeoLocationByLocation, lower)
+	var i JobScraperLinkedinGeoLocation
+	err := row.Scan(
+		&i.ID,
+		&i.Location,
+		&i.GeoID,
+		&i.State,
+		&i.Country,
+	)
+	return i, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, name, email, location, keywords, cookie, csrf_token, created_at FROM job_scraper_users WHERE email = ?
 `

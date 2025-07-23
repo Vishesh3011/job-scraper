@@ -20,3 +20,17 @@ SELECT * FROM job_scraper_users;
 SELECT id, name, email, location, keywords, cookie, csrf_token, created_at
 FROM job_scraper_users
 WHERE id = ?;
+
+-- name: GetGeoLocationByLocation :one
+SELECT
+    id,
+    location,
+    geo_id,
+    state,
+    country
+FROM
+    job_scraper_linkedin_geo_locations
+WHERE
+    LOWER(location) = LOWER(?);
+
+

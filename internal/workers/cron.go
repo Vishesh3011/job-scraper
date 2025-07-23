@@ -26,6 +26,7 @@ func (w *cronWorker) DoWork(ctx actor.Context) actor.WorkerStatus {
 			return actor.WorkerEnd
 		}
 		if msg {
+			fmt.Println("Msg: ", msg)
 			if err := w.handleSendNotification(); err != nil {
 				w.logger.Error(fmt.Sprintf("failed to handle send report: %v", err))
 			}

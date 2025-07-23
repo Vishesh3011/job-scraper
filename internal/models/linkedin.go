@@ -1,6 +1,9 @@
 package models
 
-import "job-scraper.go/internal/types"
+import (
+	"job-scraper.go/internal/types"
+	"job-scraper.go/internal/utils"
+)
 
 type LinkedInJobCards struct {
 	MetaData struct {
@@ -76,11 +79,11 @@ func (liJob *LinkedInJob) ToJob() *Job {
 		JobLocation:     liJob.JobLocation,
 		Description:     liJob.CompanyDescription.Text,
 		Link:            liJob.JobPostingUrl,
-		ApplyLink:       liJob.ApplyMethod.ComLinkedinVoyagerJobsOffsiteApply.CompanyApplyUrl,
-		StaffCount:      liJob.CompanyDetails.WebJobPosting.CompanyResolutionResult.StaffCount,
-		HeadquarterCity: liJob.CompanyDetails.WebJobPosting.CompanyResolutionResult.Headquarter.City,
-		ApplicantsCount: liJob.ApplicantsCount,
+		ApplyLink:       utils.ToPtr(liJob.ApplyMethod.ComLinkedinVoyagerJobsOffsiteApply.CompanyApplyUrl),
+		StaffCount:      utils.ToPtr(liJob.CompanyDetails.WebJobPosting.CompanyResolutionResult.StaffCount),
+		HeadquarterCity: utils.ToPtr(liJob.CompanyDetails.WebJobPosting.CompanyResolutionResult.Headquarter.City),
+		ApplicantsCount: utils.ToPtr(liJob.ApplicantsCount),
 		Platform:        types.LINKEDIN,
-		ExpiryDate:      liJob.ExpireAt,
+		ExpiryDate:      utils.ToPtr(liJob.ExpireAt),
 	}
 }

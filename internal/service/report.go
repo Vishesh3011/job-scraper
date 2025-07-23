@@ -24,7 +24,7 @@ func (r reportService) GenerateReport(jobs []models.Job, userName string) (*exce
 		return nil, err
 	}
 
-	headers := []string{"Title", "Company", "Job Locations", "Company Link", "Apply Link", "Staff Count", "Applicants Count", "Expiry Date", "Work Type"}
+	headers := []string{"Title", "Company", "Job GeoIds", "Company Link", "Apply Link", "Staff Count", "Applicants Count", "Expiry Date", "Work Type"}
 	for i, header := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
 		if err := f.SetCellValue(linkedInSheetName, cell, header); err != nil {
@@ -33,7 +33,12 @@ func (r reportService) GenerateReport(jobs []models.Job, userName string) (*exce
 	}
 
 	for rowIdx, job := range jobs {
-		value := []interface{}{job.Title, job.Company, job.JobLocation, job.Link, job.ApplyLink, job.StaffCount, job.ApplicantsCount, time.Unix(job.ExpiryDate, 0).Format("2006-01-02"), job.WorkType}
+		var expiry string
+		if job.ExpiryDate != nil {
+			expiry = time.Unix(*job.ExpiryDate, 0).Format("2006-01-02")
+		}
+
+		value := []interface{}{job.Title, job.Company, job.JobLocation, job.Link, job.ApplyLink, job.StaffCount, job.ApplicantsCount, expiry, job.WorkType}
 
 		for colIdx, val := range value {
 			if job.Platform == types.LINKEDIN {

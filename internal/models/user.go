@@ -93,7 +93,7 @@ func NewUserInput(name, cookie, csrfToken string, email *string, keywords, locat
 type UserTelegramSession struct {
 	Name          string
 	Email         *string
-	Locations     []string
+	GeoIds        []string
 	Keywords      []string
 	Cookie        string
 	CsrfToken     string
@@ -105,7 +105,7 @@ func (uTS *UserTelegramSession) ToUserInput() UserInput {
 	return UserInput{
 		Name:      uTS.Name,
 		Email:     uTS.Email,
-		Locations: uTS.Locations,
+		Locations: uTS.GeoIds,
 		Keywords:  uTS.Keywords,
 		Cookie:    uTS.Cookie,
 		CsrfToken: uTS.CsrfToken,

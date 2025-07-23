@@ -38,7 +38,7 @@ internal/
 └── utils/
 ```
 
-### Setup Database
+### Setup Database (only for CLI)
 Create database:
 ```mysql
 create database job_scraper_db;

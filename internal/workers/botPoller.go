@@ -85,8 +85,8 @@ func (w *telegramReceiverWorker) handleSingleUpdate(update tgbotapi.Update) erro
 		return w.handleAwaitUserName(session, chatId, msgTxt)
 	case types.AWAIT_JOB_ROLES:
 		return w.handleAwaitJobRoles(session, chatId, msgTxt)
-	case types.AWAIT_GEO_IDS:
-		return w.handleAwaitGeoIds(session, chatId, msgTxt)
+	case types.AWAIT_LOCATION:
+		return w.handleAwaitLocations(session, chatId, msgTxt)
 	case types.AWAIT_COOKIE:
 		return w.handleAwaitCookie(session, chatId, msgTxt)
 	case types.AWAIT_CSRF_TOKEN:
@@ -116,17 +116,32 @@ func (w *telegramReceiverWorker) handleAwaitJobRoles(session *models.UserTelegra
 	session.Keywords = strings.Split(msgTxt, ",")
 	w.logger.Info("User job roles received", slog.String("keywords", msgTxt), slog.Int64("chat_id", chatId))
 
-	session.TelegramState = types.AWAIT_GEO_IDS
+	session.TelegramState = types.AWAIT_LOCATION
 	return w.mailbox.Send(w.appCtx, models.BotMsg{
 		ChatId: chatId,
 		Text:   string(types.PromptEnterJobLocations),
 	})
 }
 
-func (w *telegramReceiverWorker) handleAwaitGeoIds(session *models.UserTelegramSession, chatId int64, msgTxt string) error {
-	session.Locations = strings.Split(msgTxt, ",")
-	w.logger.Info("User geo-ids received", slog.String("geo_ids", msgTxt), slog.Int64("chat_id", chatId))
+func (w *telegramReceiverWorker) handleAwaitLocations(session *models.UserTelegramSession, chatId int64, msgTxt string) error {
+	locations := strings.Split(msgTxt, ",")
+	w.logger.Info("User locations received", slog.String("locations", msgTxt), slog.Int64("chat_id", chatId))
 
+	var geoIds []string
+	for _, l := range locations {
+		location := w.svc.Location().FetchGeoIdBasedOnLocation(l)
+		if location == "" {
+			w.logger.Info("User input for location is invalid", slog.String("location", l), slog.Int64("chat_id", chatId))
+			session.TelegramState = types.AWAIT_LOCATION
+			return w.mailbox.Send(w.appCtx, models.BotMsg{
+				ChatId: chatId,
+				Text:   string(types.PromptEnterJobLocationsAgain),
+			})
+		}
+		geoIds = append(geoIds, location)
+	}
+
+	session.GeoIds = geoIds
 	session.TelegramState = types.AWAIT_COOKIE
 	return w.mailbox.Send(w.appCtx, models.BotMsg{
 		ChatId: chatId,
@@ -169,7 +184,7 @@ func (w *telegramReceiverWorker) handleAwaitEmailNotify(session *models.UserTele
 		w.logger.Info("User opted out of email notifications", slog.String("preference", msgTxt), slog.Int64("chat_id", chatId))
 
 		userService := w.svc.User()
-		user, err := userService.CreateUser(models.NewUserInput(session.Name, session.Cookie, session.CsrfToken, nil, session.Keywords, session.Locations))
+		user, err := userService.CreateUser(models.NewUserInput(session.Name, session.Cookie, session.CsrfToken, nil, session.Keywords, session.GeoIds))
 		if err != nil {
 			return err
 		}
@@ -190,7 +205,7 @@ func (w *telegramReceiverWorker) handleAwaitEmail(session *models.UserTelegramSe
 	}
 
 	if user == nil && errors.Is(err, types.ErrRecordNotFound) {
-		user, err := userService.CreateUser(models.NewUserInput(session.Name, session.Cookie, session.CsrfToken, session.Email, session.Keywords, session.Locations))
+		user, err := userService.CreateUser(models.NewUserInput(session.Name, session.Cookie, session.CsrfToken, session.Email, session.Keywords, session.GeoIds))
 		if err != nil {
 			return err
 		}
@@ -221,7 +236,7 @@ func (w *telegramReceiverWorker) handleAwaitEmail(session *models.UserTelegramSe
 
 func (w *telegramReceiverWorker) handleAwaitUpdateDetails(session *models.UserTelegramSession, chatId int64, msgTxt string) error {
 	if msgTxt == "y" || msgTxt == "Y" {
-		updatedUser, err := w.svc.User().UpdateUser(models.NewUserInput(session.Name, session.Cookie, session.CsrfToken, session.Email, session.Keywords, session.Locations))
+		updatedUser, err := w.svc.User().UpdateUser(models.NewUserInput(session.Name, session.Cookie, session.CsrfToken, session.Email, session.Keywords, session.GeoIds))
 		if err != nil {
 			return err
 		}

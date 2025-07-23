@@ -14,6 +14,5 @@ type Platform string
 const (
 	LINKEDIN  Platform = "LinkedIn"
 	GLASSDOOR Platform = "Glassdoor"
-	INDEED    Platform = "Indeed"
-	REMOTEOK  Platform = "RemoteOK"
+	JORA      Platform = "Jora"
 )

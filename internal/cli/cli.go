@@ -25,13 +25,22 @@ func GetUserInputFromCLI(app application.Application) (*models.User, error) {
 	}
 	keywords := strings.Split(jobRoles, ",")
 
-	var geoIds []string
-	fmt.Println("Enter your interested geo ids for locations from linkedin (can add multiple locations separated by commas): ")
-	var geoIdsStr string
-	if _, err := fmt.Scanln(&geoIdsStr); err != nil {
+	svc := service.NewService(app)
+
+	var location, geoIds []string
+	var locations string
+	fmt.Println("Enter your interested location (state/city) in Australia (can add multiple locations separated by commas): ")
+	if _, err := fmt.Scanln(&locations); err != nil {
 		return nil, err
 	}
-	geoIds = strings.Split(geoIdsStr, ",")
+	location = strings.Split(locations, ",")
+	for _, l := range location {
+		id := svc.Location().FetchGeoIdBasedOnLocation(l)
+		if id == "" {
+			return nil, errors.New(fmt.Sprintf("Could not find location for %s", l))
+		}
+		geoIds = append(geoIds, id)
+	}
 
 	cookie, err := utils.ReadMultilineInput("Enter your linkedin cookie (press Enter twice to end):")
 	if err != nil {
@@ -60,9 +69,9 @@ func GetUserInputFromCLI(app application.Application) (*models.User, error) {
 	}
 
 	if email != nil {
-		userService := service.NewService(app).User()
+		userService := svc.User()
 		user, err := userService.GetUserByEmail(*email)
-		ui := models.NewUserInput(name, cookie, csrfToken, email, keywords, geoIds)
+		ui := models.NewUserInput(name, cookie, csrfToken, email, keywords, location)
 		if err != nil {
 			if errors.Is(err, types.ErrRecordNotFound) {
 				u, err := userService.CreateUser(ui)
@@ -84,7 +93,7 @@ func GetUserInputFromCLI(app application.Application) (*models.User, error) {
 			return u, nil
 		}
 	} else {
-		user, err := service.NewService(app).User().CreateUser(models.NewUserInput(name, cookie, csrfToken, nil, keywords, geoIds))
+		user, err := service.NewService(app).User().CreateUser(models.NewUserInput(name, cookie, csrfToken, nil, keywords, location))
 		if err != nil {
 			return nil, fmt.Errorf("error creating user: %w", err)
 		}

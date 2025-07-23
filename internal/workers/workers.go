@@ -59,11 +59,17 @@ func (worker *worker) Start() {
 	})
 
 	c := cron.New()
-	c.AddFunc("0 9 * * *", func() {
-		cronMailBox.Send(ctx, true)
-	})
+	if _, err := c.AddFunc("0 9 * * *", func() {
+		worker.Logger().Info("Cron job triggered")
+		if err := cronMailBox.Send(ctx, true); err != nil {
+			worker.Logger().Error("Worker failed to send the cron trigger!")
+		}
+	}); err != nil {
+		worker.Logger().Error("Cron job triggered failed: %v", err)
+	}
 	c.Start()
 	defer c.Stop()
+
 	cronWorker := actor.New(&cronWorker{
 		svc:    svc,
 		logger: worker.Logger(),
@@ -71,7 +77,7 @@ func (worker *worker) Start() {
 		inC:    cronMailBox.ReceiveC(),
 	})
 
-	actors := actor.Combine(mailbox, processor, poller, cronWorker).Build()
+	actors := actor.Combine(cronMailBox, mailbox, processor, poller, cronWorker).Build()
 	actors.Start()
 	defer actors.Stop()
 

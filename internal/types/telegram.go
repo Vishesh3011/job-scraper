@@ -5,7 +5,7 @@ type TELEGRAM_STATE string
 const (
 	AWAIT_USER_NAME      TELEGRAM_STATE = "AWAIT_USER_NAME"
 	AWAIT_JOB_ROLES                     = "AWAIT_JOB_ROLES"
-	AWAIT_GEO_IDS                       = "AWAIT_GEO_IDS"
+	AWAIT_LOCATION                      = "AWAIT_LOCATION"
 	AWAIT_COOKIE                        = "AWAIT_COOKIE"
 	AWAIT_CSRF_TOKEN                    = "AWAIT_CSRF_TOKEN"
 	AWAIT_EMAIL_NOTIFY                  = "AWAIT_EMAIL_NOTIFY"
@@ -21,9 +21,10 @@ type BotPrompt string
 const (
 	PromptWelcome BotPrompt = "👋 Welcome to JobScraper Bot!\n\nThis bot helps you stay updated with the latest job listings from LinkedIn, directly in Telegram and optionally via email. Let's get you started with a quick setup!\n\nTo begin, please enter your name."
 
-	PromptEnterName         BotPrompt = "📝 Please enter your full name:"
-	PromptEnterJobRoles     BotPrompt = "💼 What job roles are you interested in?\n(Separate multiple roles with commas)"
-	PromptEnterJobLocations BotPrompt = "🌍 Which job location geo-IDs are you targeting?\n(Separate multiple IDs with commas)\n\nE.g., 102713980 for Australia, 102257491 for India"
+	PromptEnterName              BotPrompt = "📝 Please enter your full name:"
+	PromptEnterJobRoles          BotPrompt = "💼 What job roles are you interested in?\n(Separate multiple roles with commas)"
+	PromptEnterJobLocations      BotPrompt = "🌍 Which job location are you targeting within Australia (state/city) ?\n(Separate multiple IDs with commas)"
+	PromptEnterJobLocationsAgain BotPrompt = "🌍 Invalid job location entered. Please enter again as per the prompt. \n\n Which job location are you targeting within Australia (state/city) ?\n(Separate multiple IDs with commas)"
 
 	PromptEnterLinkedInCookie    BotPrompt = "🔐 Please paste your LinkedIn session cookie:"
 	PromptEnterLinkedInCSRFToken BotPrompt = "🛡️ Please enter your LinkedIn CSRF token:"

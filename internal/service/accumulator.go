@@ -38,13 +38,13 @@ func (a accumulatorService) FetchJobs(user *models.User) ([]models.Job, error) {
 	var jobs []models.Job
 	for _, keyword := range user.Keywords {
 		for _, geoId := range user.Locations {
-			geoIds, err := a.LinkedInClient().GetLinkedInJobIds(geoId, keyword, dToken, dCookie)
+			geoIds, err := a.JobClient().GetLinkedInJobIds(geoId, keyword, dToken, dCookie)
 			if err != nil {
 				return nil, fmt.Errorf("error fetching LinkedIn job IDs: %w", err)
 			}
 
 			for _, jobId := range geoIds {
-				job, err := a.LinkedInClient().GetLinkedInJobDetails(jobId, dToken, dCookie)
+				job, err := a.JobClient().GetLinkedInJobDetails(jobId, dToken, dCookie)
 				if err != nil {
 					return nil, fmt.Errorf("error fetching LinkedIn job details for ID %s: %w", jobId, err)
 				}
