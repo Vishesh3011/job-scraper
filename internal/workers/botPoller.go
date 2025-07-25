@@ -11,6 +11,7 @@ import (
 	"job-scraper.go/internal/models"
 	"job-scraper.go/internal/service"
 	"job-scraper.go/internal/types"
+	"job-scraper.go/internal/utils"
 	"log/slog"
 	"strings"
 	"sync"
@@ -34,12 +35,12 @@ func (w *telegramReceiverWorker) DoWork(ctx actor.Context) actor.WorkerStatus {
 		return actor.WorkerEnd
 	case update := <-w.updates:
 		if err := w.handleSingleUpdate(update); err != nil {
-			w.logger.Error(fmt.Sprintf("Error handling update: %v", err))
+			w.logger.Error(utils.PrepareLogMsg(fmt.Sprintf("Error handling update: %v", err)))
 			if err := w.mailbox.Send(ctx, models.BotMsg{
 				ChatId: update.Message.Chat.ID,
 				Text:   string(types.PromptErrorProcessingRequest),
 			}); err != nil {
-				w.logger.Error(fmt.Sprintf("Error sending update: %v", err))
+				w.logger.Error(utils.PrepareLogMsg(fmt.Sprintf("Error sending update: %v", err)))
 			}
 		}
 		return actor.WorkerContinue

@@ -6,6 +6,7 @@ import (
 	"job-scraper.go/internal/core/config"
 	"job-scraper.go/internal/models"
 	"job-scraper.go/internal/utils"
+	"log/slog"
 )
 
 type AccumulatorService interface {
@@ -15,12 +16,14 @@ type AccumulatorService interface {
 type accumulatorService struct {
 	client.Client
 	config.Config
+	logger *slog.Logger
 }
 
-func newAccumulatorService(client client.Client, config config.Config) AccumulatorService {
+func newAccumulatorService(client client.Client, config config.Config, logger *slog.Logger) AccumulatorService {
 	return &accumulatorService{
 		Client: client,
 		Config: config,
+		logger: logger,
 	}
 }
 
@@ -40,13 +43,15 @@ func (a accumulatorService) FetchJobs(user *models.User) ([]models.Job, error) {
 		for _, geoId := range user.Locations {
 			geoIds, err := a.JobClient().GetLinkedInJobIds(geoId, keyword, dToken, dCookie)
 			if err != nil {
-				return nil, fmt.Errorf("error fetching LinkedIn job IDs: %w", err)
+				a.logger.Error(utils.PrepareLogMsg(fmt.Sprintf("Failed to get linkedin job ids: %v", err)))
+				return nil, err
 			}
 
 			for _, jobId := range geoIds {
 				job, err := a.JobClient().GetLinkedInJobDetails(jobId, dToken, dCookie)
 				if err != nil {
-					return nil, fmt.Errorf("error fetching LinkedIn job details for ID %s: %w", jobId, err)
+					a.logger.Error(utils.PrepareLogMsg(fmt.Sprintf("Failed to get linkedin job details: %v", err)))
+					return nil, err
 				}
 				j := job.ToJob()
 				jobs = append(jobs, *j)

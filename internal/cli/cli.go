@@ -76,7 +76,7 @@ func GetUserInputFromCLI(app application.Application) (*models.User, error) {
 			if errors.Is(err, types.ErrRecordNotFound) {
 				u, err := userService.CreateUser(ui)
 				if err != nil {
-					return nil, fmt.Errorf("error creating user: %w", err)
+					return nil, err
 				}
 				return u, nil
 			} else {
@@ -95,7 +95,7 @@ func GetUserInputFromCLI(app application.Application) (*models.User, error) {
 	} else {
 		user, err := service.NewService(app).User().CreateUser(models.NewUserInput(name, cookie, csrfToken, nil, keywords, location))
 		if err != nil {
-			return nil, fmt.Errorf("error creating user: %w", err)
+			return nil, err
 		}
 		return user, nil
 	}

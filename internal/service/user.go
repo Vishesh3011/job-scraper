@@ -9,6 +9,7 @@ import (
 	"job-scraper.go/internal/repository"
 	"job-scraper.go/internal/types"
 	"job-scraper.go/internal/utils"
+	"log/slog"
 )
 
 type UserService interface {
@@ -21,35 +22,41 @@ type UserService interface {
 type userService struct {
 	context.Context
 	*repository.Queries
-	key string
+	key    string
+	logger *slog.Logger
 }
 
-func newUserService(ctx context.Context, q *repository.Queries, key string) UserService {
+func newUserService(ctx context.Context, q *repository.Queries, key string, logger *slog.Logger) UserService {
 	return userService{
 		Context: ctx,
 		Queries: q,
 		key:     key,
+		logger:  logger,
 	}
 }
 
 func (u userService) CreateUser(ui *models.UserInput) (*models.User, error) {
 	cookie, err := utils.EncryptStr(ui.Cookie, u.key)
 	if err != nil {
+		u.logger.Error(utils.PrepareLogMsg("Failed to encrypt cookie"))
 		return nil, err
 	}
 
 	token, err := utils.EncryptStr(ui.CsrfToken, u.key)
 	if err != nil {
+		u.logger.Error(utils.PrepareLogMsg("Failed to encrypt CSRF token"))
 		return nil, err
 	}
 
 	user := models.NewUser(ui.Name, ui.Email, ui.Locations, ui.Keywords, cookie, token)
 	if err := u.Queries.CreateUser(u.Context, user.ToCreateUserParam(token, cookie)); err != nil {
+		u.logger.Error(utils.PrepareLogMsg("Failed to create user in database"), slog.Any("error", err))
 		return nil, err
 	}
 
 	jsu, err := u.Queries.GetUserByID(u.Context, user.Id)
 	if err != nil {
+		u.logger.Error(utils.PrepareLogMsg("Failed to retrieve user after creation"), slog.Any("error", err))
 		return nil, err
 	}
 

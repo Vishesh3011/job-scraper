@@ -1,6 +1,8 @@
 package client
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+import (
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+)
 
 type telegramClient struct {
 	token string
@@ -17,6 +19,6 @@ func (c *telegramClient) GetTelegramBot(token string) (*tgbotapi.BotAPI, error) 
 	if err != nil {
 		return nil, err
 	}
-	bot.Debug = true
+	bot.Debug = false
 	return bot, nil
 }

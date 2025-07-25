@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
+	"os"
 
 	"job-scraper.go/internal/client"
 	"job-scraper.go/internal/core/config"
@@ -27,7 +28,7 @@ type application struct {
 
 func NewApplication() (Application, error) {
 	ctx := context.Background()
-	logger := slog.Default()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	appConfig, err := config.NewConfig()
 	if err != nil {

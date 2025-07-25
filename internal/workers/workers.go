@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"job-scraper.go/internal/types"
-	"log"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -16,26 +15,26 @@ import (
 	"job-scraper.go/internal/utils"
 )
 
-type worker struct {
+type Worker struct {
 	application.Application
 }
 
-func NewWorker(app application.Application) *worker {
-	return &worker{app}
+func NewWorker(app application.Application) *Worker {
+	return &Worker{app}
 }
 
-func (worker *worker) Start() {
+func (worker *Worker) Start() {
 	ctx, cancel := context.WithCancel(worker.Context())
 	bot, err := worker.Clients().TelegramClient().GetTelegramBot(worker.Config().TelegramConfig().Token())
 	if err != nil {
-		log.Fatalf("Error creating Telegram bot: %v", err)
+		worker.Logger().Error(utils.PrepareLogMsg(fmt.Sprintf("Error creating Telegram bot: %v", err)))
 	}
 
 	updates, err := bot.GetUpdatesChan(tgbotapi.UpdateConfig{
 		Timeout: worker.Config().TelegramConfig().Timeout(),
 	})
 	if err != nil {
-		log.Fatalf("Error getting updates channel: %v", err)
+		worker.Logger().Error(utils.PrepareLogMsg(fmt.Sprintf("Error getting updates channel: %v", err)))
 	}
 
 	mailbox := actor.NewMailbox[models.BotMsg]()
@@ -63,10 +62,10 @@ func (worker *worker) Start() {
 	if _, err := c.AddFunc(types.EmailCronTime, func() {
 		worker.Logger().Info("Cron job triggered")
 		if err := cronMailBox.Send(ctx, true); err != nil {
-			worker.Logger().Error("Worker failed to send the cron trigger!")
+			worker.Logger().Error(utils.PrepareLogMsg("Worker failed to send the cron trigger!"))
 		}
 	}); err != nil {
-		worker.Logger().Error("Cron job triggered failed: %v", err)
+		worker.Logger().Error(utils.PrepareLogMsg(fmt.Sprintf("Cron job triggered failed: %v", err)))
 	}
 	c.Start()
 	defer c.Stop()

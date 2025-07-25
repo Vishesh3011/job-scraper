@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"job-scraper.go/internal/utils"
 	"log/slog"
 
 	"github.com/vladopajic/go-actor/actor"
@@ -26,9 +27,8 @@ func (w *cronWorker) DoWork(ctx actor.Context) actor.WorkerStatus {
 			return actor.WorkerEnd
 		}
 		if msg {
-			fmt.Println("Msg: ", msg)
 			if err := w.handleSendNotification(); err != nil {
-				w.logger.Error(fmt.Sprintf("failed to handle send report: %v", err))
+				w.logger.Error(utils.PrepareLogMsg(fmt.Sprintf("failed to handle send report: %v", err)))
 			}
 		}
 		return actor.WorkerContinue

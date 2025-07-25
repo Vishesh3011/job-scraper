@@ -4,6 +4,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/vladopajic/go-actor/actor"
 	"job-scraper.go/internal/models"
+	"job-scraper.go/internal/utils"
 	"log/slog"
 )
 
@@ -21,12 +22,12 @@ func (w *telegramSenderWorker) DoWork(ctx actor.Context) actor.WorkerStatus {
 		if msg.Doc != nil {
 			_, err := w.bot.Send(msg.Doc)
 			if err != nil {
-				w.logger.Error("Failed to send document", slog.String("error", err.Error()))
+				w.logger.Error(utils.PrepareLogMsg("Failed to send document"), slog.String("error", err.Error()))
 			}
 		} else {
 			_, err := w.bot.Send(tgbotapi.NewMessage(msg.ChatId, msg.Text))
 			if err != nil {
-				w.logger.Error("Failed to send message", slog.String("error", err.Error()))
+				w.logger.Error(utils.PrepareLogMsg("Failed to send message"), slog.String("error", err.Error()))
 			} else {
 				w.logger.Info("Message sent to Telegram", slog.Int64("chat_id", msg.ChatId), slog.String("text", msg.Text))
 			}
