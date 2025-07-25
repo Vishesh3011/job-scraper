@@ -5,7 +5,9 @@ import (
 	"strings"
 )
 
-const From = "modivishesh30@gmail.com"
+const EmailCronTime = "0 9 * * *"
+
+const From = "your-email@gmail.com"
 const Subject = "Your Daily Job Report"
 const Body = "Hello {{userName}},\n\nPlease find attached your daily job report. This report includes {{jobCnt}} new job postings that match your search criteria.\n\nIf you have any questions or suggestions, feel free to reach out.\n\nBest regards,\nJob Scraper Team"
 

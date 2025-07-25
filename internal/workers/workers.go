@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"fmt"
+	"job-scraper.go/internal/types"
 	"log"
 	"time"
 
@@ -59,7 +60,7 @@ func (worker *worker) Start() {
 	})
 
 	c := cron.New()
-	if _, err := c.AddFunc("0 9 * * *", func() {
+	if _, err := c.AddFunc(types.EmailCronTime, func() {
 		worker.Logger().Info("Cron job triggered")
 		if err := cronMailBox.Send(ctx, true); err != nil {
 			worker.Logger().Error("Worker failed to send the cron trigger!")

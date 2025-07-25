@@ -33,14 +33,6 @@ func ReadMultilineInput(prompt string) (string, error) {
 	return strings.Join(lines, "\n"), nil
 }
 
-func GetCorrelationID(ctx context.Context) string {
-	val := ctx.Value("cid")
-	if cid, ok := val.(string); ok {
-		return cid
-	}
-	return ""
-}
-
 func WaitForTermination(cancel context.CancelFunc) <-chan struct{} {
 	sigChan := make(chan os.Signal, 1)
 	doneChan := make(chan struct{})
