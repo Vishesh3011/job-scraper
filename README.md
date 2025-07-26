@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>Welcome to Job Scraper!</h1>
+  <h1>Welcome to JobScraper!</h1>
 </div>
 <div align="center">
   <img src="data/job-scraper.png" alt="Image description" width="400"/>
