@@ -112,11 +112,11 @@ sudo systemctl restart postfix
 ### To run the CLI tool:
 Set the environment variables for Database, SMTP, LinkedIn CSRF token and cookie (refer to example.env file).
 ```bash
-bash /bin/cli
+./bin/cli
 ```
 
 ### To test the telegram bot (note you need to have a telegram bot token):
 Set the environment variables for Database, Telegram, SMTP, LinkedIn CSRF token and cookie (refer to example.env file).
 ```bash
-bash /bin/bgprocess
+./bin/bgprocess
 ```
