@@ -5,8 +5,10 @@
   <img src="data/job-scraper.png" alt="Image description" width="400"/>
 </div>
 
-This tool is for everyone who wants to find jobs based on their interest, position, location (remote/on-site) using LinkedIn.
-This tool can be used as both a telegram bot (access on https://t.me/jobScraperVMBot) and a CLI tool. Based on user input, users can either select a daily report for jobs as email delivery or just get a report at the moment as per their requirement. 
+JobScraper is a tool designed for anyone looking for jobs based on their interest, position, location (remote/on-site) using LinkedIn.
+This tool can be used as both a telegram bot (access on https://t.me/jobScraperVMBot) and a CLI tool. 
+
+Based on user input, users can either select a daily report for jobs and subscribe to email delivery or just get a report on demand as per their requirement. 
 
 ### Technical Requirements (if running on a CLI):
 - MySQL installed
@@ -58,7 +60,7 @@ flush privileges;
 ```
 
 ### Load the schema and pre-requisite data
-```
+```commandline
 mysql -u job_scraper -p job_scraper_db < db/init.sql
 mysql -u job_scraper -p job_scraper_db < db/load_prerequisites.sql
 ```
