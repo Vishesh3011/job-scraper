@@ -18,7 +18,10 @@ func (w *telegramSenderWorker) DoWork(ctx actor.Context) actor.WorkerStatus {
 	select {
 	case <-ctx.Done():
 		return actor.WorkerEnd
-	case msg := <-w.mailbox.ReceiveC():
+	case msg, ok := <-w.mailbox.ReceiveC():
+		if !ok {
+			return actor.WorkerEnd
+		}
 		if msg.Doc != nil {
 			_, err := w.bot.Send(msg.Doc)
 			if err != nil {

@@ -30,7 +30,7 @@ func NewApplication() (Application, error) {
 	ctx := context.Background()
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	appConfig, err := config.NewConfig()
+	appConfig, err := config.NewConfig(logger)
 	if err != nil {
 		return nil, err
 	}

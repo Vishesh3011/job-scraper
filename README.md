@@ -60,20 +60,20 @@ flush privileges;
 ```
 
 ### Load the schema and pre-requisite data
-```commandline
+```bash
 mysql -u job_scraper -p job_scraper_db < db/init.sql
 mysql -u job_scraper -p job_scraper_db < db/load_prerequisites.sql
 ```
 
 ### Setup Postfix locally (for SMTP service)
 Install postfix:
-```commandline
+```bash
 sudo apt update
 sudo apt install postfix mailutils libsasl2-modules -y
 ```
 
 Update postfix config:
-```commandline
+```bash
 sudo nano /etc/postfix/main.cf
 ```
 and enable relay through gmail:
@@ -88,7 +88,7 @@ smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
 Create a Gmail app password (https://myaccount.google.com/security) and copy the 16 character password.
 
 To add the gmail app password use
-```commandline
+```bash
 sudo nano /etc/postfix/sasl_passwd
 ```
 and append
@@ -104,8 +104,19 @@ sudo chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
 sudo chmod 600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
 ```
 
-At the end restart the postfix:
-```commandline
+Restart the postfix:
+```bash
 sudo systemctl restart postfix
 ```
 
+### To run the CLI tool:
+Set the environment variables for Database, SMTP, LinkedIn CSRF token and cookie (refer to example.env file).
+```bash
+bash /bin/cli
+```
+
+### To test the telegram bot (note you need to have a telegram bot token):
+Set the environment variables for Database, Telegram, SMTP, LinkedIn CSRF token and cookie (refer to example.env file).
+```bash
+bash /bin/bgprocess
+```

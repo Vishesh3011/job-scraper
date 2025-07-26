@@ -5,12 +5,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"regexp"
 	"strings"
 	"syscall"
-	"time"
 )
 
 func ReadMultilineInput(prompt string) (string, error) {
@@ -33,7 +33,7 @@ func ReadMultilineInput(prompt string) (string, error) {
 	return strings.Join(lines, "\n"), nil
 }
 
-func WaitForTermination(cancel context.CancelFunc) <-chan struct{} {
+func WaitForTermination(cancel context.CancelFunc, logger *slog.Logger) <-chan struct{} {
 	sigChan := make(chan os.Signal, 1)
 	doneChan := make(chan struct{})
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -41,7 +41,7 @@ func WaitForTermination(cancel context.CancelFunc) <-chan struct{} {
 	go func() {
 		<-sigChan
 		cancel()
-		fmt.Println("Shutting down...at ", time.Now())
+		logger.Info(fmt.Sprintf("Received termination signal, shutting down..."))
 		close(doneChan)
 	}()
 

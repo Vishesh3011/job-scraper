@@ -2,6 +2,9 @@ package config
 
 import (
 	"errors"
+	"fmt"
+	"job-scraper.go/internal/utils"
+	"log/slog"
 	"syscall"
 )
 
@@ -19,7 +22,7 @@ type config struct {
 	encryptionKey string
 }
 
-func NewConfig() (Config, error) {
+func NewConfig(logger *slog.Logger) (Config, error) {
 	dbConfig, err := newDBConfig()
 	if err != nil {
 		return nil, err
@@ -32,7 +35,7 @@ func NewConfig() (Config, error) {
 
 	telegramConfig, err := newTelegramConfig()
 	if err != nil {
-		return nil, err
+		logger.Warn(utils.PrepareLogMsg(fmt.Sprintf("Error creating Telegram config: %v", err)))
 	}
 
 	key, found := syscall.Getenv("ENCRYPTION_KEY")

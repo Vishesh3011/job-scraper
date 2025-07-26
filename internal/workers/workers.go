@@ -81,6 +81,6 @@ func (worker *Worker) Start() {
 	actors.Start()
 	defer actors.Stop()
 
-	worker.Logger().Info(fmt.Sprintf("Worker started at %s...", time.Now().Format("2006-01-02T15:04:05 MST")))
-	<-utils.WaitForTermination(cancel)
+	worker.Logger().Info(fmt.Sprintf("Worker started at %s. Press Ctrl+C to stop.", time.Now().Format("2006-01-02T15:04:05 MST")))
+	<-utils.WaitForTermination(cancel, worker.Logger())
 }

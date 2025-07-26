@@ -23,7 +23,6 @@ func (w *cronWorker) DoWork(ctx actor.Context) actor.WorkerStatus {
 		return actor.WorkerEnd
 	case msg, ok := <-w.inC:
 		if !ok {
-			w.logger.Info("cron worker channel closed")
 			return actor.WorkerEnd
 		}
 		if msg {
