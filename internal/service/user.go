@@ -66,21 +66,25 @@ func (u userService) CreateUser(ui *models.UserInput) (*models.User, error) {
 func (u userService) UpdateUser(ui *models.UserInput) (*models.User, error) {
 	loc, err := json.Marshal(ui.Locations)
 	if err != nil {
+		u.logger.Error(utils.PrepareLogMsg("Failed to marshal locations"), slog.Any("error", err))
 		return nil, err
 	}
 
 	keywords, err := json.Marshal(ui.Keywords)
 	if err != nil {
+		u.logger.Error(utils.PrepareLogMsg("Failed to marshal keywords"), slog.Any("error", err))
 		return nil, err
 	}
 
 	cookie, err := utils.EncryptStr(ui.Cookie, u.key)
 	if err != nil {
+		u.logger.Error(utils.PrepareLogMsg("Failed to encrypt cookie"), slog.Any("error", err))
 		return nil, err
 	}
 
 	token, err := utils.EncryptStr(ui.CsrfToken, u.key)
 	if err != nil {
+		u.logger.Error(utils.PrepareLogMsg("Failed to encrypt CSRF token"), slog.Any("error", err))
 		return nil, err
 	}
 
@@ -92,11 +96,13 @@ func (u userService) UpdateUser(ui *models.UserInput) (*models.User, error) {
 		Cookie:    cookie,
 		CsrfToken: token,
 	}); err != nil {
+		u.logger.Error(utils.PrepareLogMsg("Failed to update user in database"), slog.Any("error", err))
 		return nil, err
 	}
 
 	jsu, err := u.Queries.GetUserByEmail(u.Context, utils.ToSQLNullStr(ui.Email))
 	if err != nil {
+		u.logger.Error(utils.PrepareLogMsg("Failed to retrieve user after update"), slog.Any("error", err))
 		return nil, err
 	}
 
@@ -107,8 +113,10 @@ func (u userService) GetUserByEmail(email string) (*models.User, error) {
 	jsu, err := u.Queries.GetUserByEmail(u.Context, utils.ToSQLNullStr(&email))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			u.logger.Info(utils.PrepareLogMsg("User not found by email"), slog.String("email", email))
 			return nil, types.ErrRecordNotFound
 		}
+		u.logger.Error(utils.PrepareLogMsg("Failed to retrieve user by email"), slog.Any("error", err))
 		return nil, err
 	}
 
@@ -118,6 +126,7 @@ func (u userService) GetUserByEmail(email string) (*models.User, error) {
 func (u userService) GetAllUsers() ([]models.User, error) {
 	users, err := u.Queries.GetAllUsers(u.Context)
 	if err != nil {
+		u.logger.Error(utils.PrepareLogMsg("Failed to retrieve all users"), slog.Any("error", err))
 		return nil, err
 	}
 	var result []models.User

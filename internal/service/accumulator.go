@@ -30,11 +30,13 @@ func newAccumulatorService(client client.Client, config config.Config, logger *s
 func (a accumulatorService) FetchJobs(user *models.User) ([]models.Job, error) {
 	dToken, err := utils.DecryptStr(user.CsrfToken, a.EncryptionKey())
 	if err != nil {
+		a.logger.Error(utils.PrepareLogMsg(fmt.Sprintf("Failed to decrypt CSRF token: %v", err)))
 		return nil, err
 	}
 
 	dCookie, err := utils.DecryptStr(user.Cookie, a.EncryptionKey())
 	if err != nil {
+		a.logger.Error(utils.PrepareLogMsg(fmt.Sprintf("Failed to decrypt cookie: %v", err)))
 		return nil, err
 	}
 

@@ -16,7 +16,7 @@ func main() {
 	}
 
 	app, err := application.NewApplication()
-	if err == nil {
+	if err != nil {
 		app.Logger().Error(utils.PrepareLogMsg(fmt.Sprintf("Error initializing application: %v", err)))
 		os.Exit(1)
 	}
