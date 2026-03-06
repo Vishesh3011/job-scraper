@@ -1,0 +1,69 @@
+services:
+  job-scraper-cli:
+    image: js-cli
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.cli
+      target: build-dev
+    init: true
+    volumes:
+      - type: bind
+        source: .
+        target: /app/
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - backend
+    restart: unless-stopped
+
+  job-scraper-worker:
+    image: js-worker
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.worker
+      target: build-dev
+    init: true
+    volumes:
+      - type: bind
+        source: .
+        target: /app/
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - backend
+    restart: unless-stopped
+
+  db:
+    image: mysql:8
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: job_scraper_db
+      MYSQL_USER: job_scraper
+      MYSQL_PASSWORD: job_scraper
+    ports:
+      - 3307:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+volumes:
+  mysqldata:
+
+networks:
+  backend:
+
+
+

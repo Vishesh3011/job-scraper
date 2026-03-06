@@ -1,0 +1,64 @@
+# import golang version 1.23 and name the stage as build-base
+FROM golang:1.23-bullseye AS build-base
+
+# defines work directory inside docker container
+WORKDIR /app
+
+# copies files required to install inside container (libraries, dependencies, etc)
+COPY go.mod go.sum ./
+
+# caches the required to installations to avoid installing again upon change (saves a lot of time downloading)
+RUN --mount=type=cache,target=/go/pkg/mod \
+  --mount=type=cache,target=/root/.cache/go-build \
+  go mod download
+
+# create another stage for development/sandbox environment
+FROM build-base AS build-dev
+
+# enables hot reload for frequent changes reflection (only for dev environment)
+RUN go install github.com/cosmtrek/air@v1.43.0 && \
+  go install github.com/go-delve/delve/cmd/dlv@v1.20.2
+
+# copies the source code
+COPY . .
+
+# enables hot reload from the air library
+CMD ["air", "-c", "worker.air.toml"]
+
+# create another stage for production environment 
+FROM build-base AS build-prod
+
+# adds non-root user for extra layer of security
+RUN useradd -u 1001 nonroot
+
+# copies the source code
+COPY . .
+
+# builds a binary at the compile time to check for any errors
+RUN go build \
+  -ldflags="-linkmode external -extldflags -static" \
+  -tags netgo \
+  -o bin/job-scraper-worker \
+  ./cmd/bgprocess/main.go
+
+# use another stage for deployable image
+FROM scratch
+
+# only for apis
+# ENV GIN_MODE=RELEASE
+
+# Copy the password file for user to access in production
+COPY --from=build-prod /etc/passwd /etc/passwd
+
+# Copy the app binary from the build stage into the scratch stage
+COPY --from=build-prod /app/bin/job-scraper-worker bin/job-scraper-worker
+
+# Use non root user
+USER nonroot
+
+# only for apis
+# EXPOSE 8080
+
+CMD ["/bin/job-scraper-worker"]
+
+
